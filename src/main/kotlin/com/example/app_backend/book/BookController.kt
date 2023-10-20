@@ -16,6 +16,5 @@ class BookController(private val bookService: BookService) {
         val books = bookService.getBooks()
         println("Books 응답 성공")  // 로그 출력
         return books
-
     }
 }
