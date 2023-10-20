@@ -1,19 +1,14 @@
-package com.example.app_backend.api
+package com.example.app_backend.book
 
-import com.example.app_backend.api.SimplifiedBookDTO
 import com.example.app_backend.api.SimplifiedBooks
-
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.stereotype.Service
 
-@RestController
-@RequestMapping("/api/books")
-class BookController {
-    @GetMapping
+@Service
+class BookService {
     fun getBooks(): List<SimplifiedBookDTO> {
+        println("getBooks() called")//함수 호출
         return transaction {
             SimplifiedBooks.selectAll().map { row ->
                 SimplifiedBookDTO(

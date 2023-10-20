@@ -1,4 +1,4 @@
-package com.example.app_backend.api
+package com.example.app_backend.book
 // exposed 엔티티
 data class SimplifiedBookDTO(
     val id: Int,
