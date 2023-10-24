@@ -11,6 +11,8 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.boot.json.JsonParseException
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Service
 class BookService(
@@ -22,7 +24,7 @@ class BookService(
     private val mapper = jacksonObjectMapper()
 
     fun getCacheBooks(): List<SimplifiedBookDTO> {
-        println("cache 요청 들어 옴")
+//        println("cache 요청 들어 옴")
         // 성능 측정 시작 시간
         val start = System.currentTimeMillis()
         // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
@@ -55,12 +57,32 @@ class BookService(
     }
 
     // 최신 DB정보 cache에 업데이트
-    fun updateCache(): List<SimplifiedBookDTO> {
-        // DB 가져옴
-        val updatedBooks = getBooks()
-        //가져온 리스트를 JSON 문자열로 변환하여 "books"라는 키로 Redis 캐시에 저장
-        redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-        return updatedBooks
+    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedBookId: Int? = null): List<SimplifiedBookDTO> {
+        println("updateCache 요청 들어 옴")
+        // db 가져옴
+        val existingBooks = getBooks()
+        
+        if (deletedBookId != null) {
+            println("삭제 요청 들어 옴")
+            // 일치하는 것 제외하고 새로운 데이터로 set함.
+            val updatedBooks = existingBooks.filterNot { it.id == deletedBookId }
+            redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
+            return updatedBooks
+        }
+
+        if (newBook != null) {
+            println("삭제 요청 들어 옴")
+            // 새로운 책이 있다면, 기존 정보에 새로운 책 정보를 추가
+            val isNewBook = existingBooks.none { it.id == newBook.id }
+            if (isNewBook) {
+                val updatedBooks = existingBooks + newBook
+                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
+                return updatedBooks
+            }
+        }
+
+        // 아무런 변경이 없으면 기존 정보 반환
+        return existingBooks
     }
 
     // DB
@@ -92,11 +114,16 @@ class BookService(
         }
     }
 
+
     fun addBook(book: SimplifiedBookDTO): List<SimplifiedBookDTO> {
+        println("addBook 요청 들어옴")
+        val currentTime = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm")
+        val formattedDate = currentTime.format(formatter)
         // DB에 책을 추가
         val addBook = transaction {
             SimplifiedBooks.insertAndGetId {
-                it[createdDate] = book.createdDate
+                it[createdDate] = formattedDate
                 it[title] = book.title
                 it[link] = book.link
                 it[author] = book.author
@@ -115,8 +142,10 @@ class BookService(
                 it[customerReviewRank] = book.customerReviewRank
             }
         }
+        println("updateCashe :" +
+                "${updateCache(book)}")
         // 캐시 업데이트
-        return updateCache()
+        return updateCache(book)
     }
 
     fun deleteBook(bookId: Int): List<SimplifiedBookDTO> {
@@ -126,6 +155,6 @@ class BookService(
         }
 
         // 캐시 업데이트
-        return updateCache()
+        return updateCache(deletedBookId = bookId)
     }
 }

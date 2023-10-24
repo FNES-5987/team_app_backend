@@ -10,14 +10,17 @@ class BookController(private val bookService: BookService) {
     @GetMapping("/cache")
     fun getCacheBooks(): List<SimplifiedBookDTO> {
         val cachedBooks = bookService.getCacheBooks()
-        println("cacheBooks 응답 성공")
+//        println("cacheBooks 응답 성공")
         return cachedBooks
     }
     // 추가
-    @PostMapping("/addBook")
+    @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
+
         // DB 업데이트 기능 포함
         val updatedBooks = bookService.addBook(book)
+        println("addBooks 응답 성공")
+        println("${updatedBooks}")
         return ResponseEntity.ok(updatedBooks)
     }
 
