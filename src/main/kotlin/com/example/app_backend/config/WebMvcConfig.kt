@@ -12,7 +12,8 @@ class WebMvcConfig: WebMvcConfigurer {
         registry
             .addMapping("/**")
             .allowedOrigins(
-                "http://localhost:5000"
+                "http://localhost:5000",
+                "http://localhost:5500",
             ) // 로컬 호스트 origin 허용
             .allowedMethods("*")
             .allowCredentials(true)
