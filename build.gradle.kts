@@ -5,6 +5,11 @@ plugins {
     id("io.spring.dependency-management") version "1.1.3"
     kotlin("jvm") version "1.8.22"
     kotlin("plugin.spring") version "1.8.22"
+    id("application")
+}
+
+application {
+    mainClass = ("com.example.app_backend.ApplicationKt")
 }
 
 group = "com.example"
@@ -48,6 +53,7 @@ dependencies {
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation ("org.springframework.cloud:spring-cloud-starter-loadbalancer")
 
+    implementation ("redis.clients:jedis:3.7.0")
 }
 
 dependencyManagement {

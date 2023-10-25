@@ -1,5 +1,7 @@
 package com.example.app_backend.inventory
 
+// data.kt
+
 data class InventoryResponse(
     val id : Long,
     val publisher: String,
