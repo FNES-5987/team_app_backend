@@ -207,13 +207,48 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
 
         transaction {
             Inventories.update({Inventories.id eq id}) {
-                if(!request.title.isNullOrEmpty()) {
-                    it[title] = request.title!!
+                if (request.publisher != null) {
+                    it[publisher] = request.publisher
                 }
-                if(!request.publisher.isNullOrEmpty()) {
-                    it[publisher] = request.publisher!!
+                if (request.title != null) {
+                    it[title] = request.title
                 }
-                // .ㅁㅇㅁㄴㄻㄴㅇㅁㄴㅇㄴㄹ
+                if (request.link != null) {
+                    it[link] = request.link
+                }
+                if (request.author != null) {
+                    it[author] = request.author
+                }
+                if (request.pubDate != null) {
+                    it[pubDate] = request.pubDate
+                }
+                if (request.isbn != null) {
+                    it[isbn] = request.isbn
+                }
+                if (request.isbn13 != null) {
+                    it[isbn13] = request.isbn13
+                }
+                if (request.itemId != null) {
+                    it[itemId] = request.itemId
+                }
+                if (request.categoryId != null) {
+                    it[categoryId] = request.categoryId
+                }
+                if (request.categoryName != null) {
+                    it[categoryName] = request.categoryName
+                }
+                if (request.priceSales != null) {
+                    it[priceSales] = request.priceSales
+                }
+                if (request.priceStandard != null) {
+                    it[priceStandard] = request.priceStandard
+                }
+                if (request.stockStatus != null) {
+                    it[stockStatus] = request.stockStatus
+                }
+                if (request.cover != null) {
+                    it[cover] = request.cover
+                }
             }
         }
 
