@@ -18,7 +18,7 @@ class BookController(private val bookService: BookService) {
     @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
         val books = bookService.addBook(book)
-        //        println("AddBooks 응답 성공")
+                println("AddBooks 응답 성공")
         return if (books.isNotEmpty()) {
             ResponseEntity.ok(books)
         } else {
@@ -26,7 +26,7 @@ class BookController(private val bookService: BookService) {
         }
     }
 
-    @DeleteMapping("/{bookId}")
+    @DeleteMapping("/{bookItemId}")
     fun deleteBook(@PathVariable bookId: Int): ResponseEntity<List<SimplifiedBookDTO>> {
         // DB 업데이트 기능 포함
         val updatedBooks = bookService.deleteBook(bookId)

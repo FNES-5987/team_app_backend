@@ -60,15 +60,15 @@ class BookService(
     }
 
     // 최신 DB정보 cache에 업데이트
-    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedBookId: Int? = null): List<SimplifiedBookDTO> {
+    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedItemId: Int? = null): List<SimplifiedBookDTO> {
         println("updateCache 요청 들어 옴")
         // db 가져옴
         val existingBooks = getBooks()
         
-        if (deletedBookId != null) {
+        if (deletedItemId != null) {
             println("삭제 요청 들어 옴")
             // 일치하는 것 제외하고 새로운 데이터로 set함.
-            val updatedBooks = existingBooks.filterNot { it.id == deletedBookId }
+            val updatedBooks = existingBooks.filterNot { it.itemId == deletedItemId }
             redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
             return updatedBooks
         }
@@ -76,12 +76,13 @@ class BookService(
         if (newBook != null) {
             println("추가 요청 들어 옴")
             // 새로운 책이 있다면, 기존 정보에 새로운 책 정보를 추가
-            val isNewBook = existingBooks.none { it.isbn == newBook.isbn || it.isbn13 == newBook.isbn13 }
+            val isNewBook = existingBooks.none { it.itemId == newBook.itemId  }
             if (isNewBook) {
                 val updatedBooks = existingBooks + newBook
                 redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
                 return updatedBooks
             }
+            println("추가요청 redis 반영됨")
         }
 
         // 아무런 변경이 없으면 기존 정보 반환
@@ -121,7 +122,7 @@ class BookService(
     fun addBook(book: SimplifiedBookDTO): List<SimplifiedBookDTO> {
         println("addBook 요청 들어옴")
         val existingBooks = getBooks()
-        val isBook = existingBooks.filter { it.isbn == book.isbn || it.isbn13 == book.isbn13 }
+        val isBook = existingBooks.filter { it.itemId == book.itemId }
         if (isBook.isEmpty()) {
             val currentTime = LocalDateTime.now()
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm")
@@ -153,13 +154,13 @@ class BookService(
         return emptyList()
     }
 
-    fun deleteBook(bookId: Int): List<SimplifiedBookDTO> {
+    fun deleteBook(itemId: Int): List<SimplifiedBookDTO> {
         // DB에서 책을 삭제
         transaction {
-            SimplifiedBooks.deleteWhere { SimplifiedBooks.id eq bookId }
+            SimplifiedBooks.deleteWhere { SimplifiedBooks.id eq itemId }
         }
 
         // 캐시 업데이트
-        return updateCache(deletedBookId = bookId)
+        return updateCache(deletedItemId = itemId)
     }
 }
