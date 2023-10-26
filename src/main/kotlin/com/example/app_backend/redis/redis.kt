@@ -10,7 +10,7 @@ fun cacheInventoryInRedis() {
     val password = "password1234!"
     val connection = DriverManager.getConnection(url, username, password)
 
-    // 데이터 조회
+    // inventory 테이블 데이터 조회
     val statement = connection.createStatement()
     val resultSet = statement.executeQuery("SELECT itemId, stockStatus FROM inventory")
 
@@ -42,3 +42,21 @@ fun getStockStatusFromRedis(itemId: String): String? {
         }
     }
 }
+
+fun cacheInventoryInRedis(itemId: String, stockStatus: String) {
+    // Redis 연결 설정
+    val jedis = Jedis("localhost", 6379)
+
+    try {
+        // itemId와 stockStatus를 Redis에 저장
+        println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
+        jedis.set(itemId, stockStatus)
+    } catch (e: Exception) {
+        // 예외 출력
+        e.printStackTrace()
+    } finally {
+        // 연결 종료
+        jedis.close()
+    }
+}
+
