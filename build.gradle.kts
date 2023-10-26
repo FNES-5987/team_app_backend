@@ -52,8 +52,12 @@ dependencies {
 
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation ("org.springframework.cloud:spring-cloud-starter-loadbalancer")
+<<<<<<< HEAD
 
     implementation ("redis.clients:jedis:3.7.0")
+=======
+    implementation ("org.springframework.boot:spring-boot-starter-data-redis")
+>>>>>>> origin
 }
 
 dependencyManagement {

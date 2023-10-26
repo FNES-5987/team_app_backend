@@ -2,7 +2,7 @@ package com.example.app_backend.book
 // exposed 엔티티
 data class SimplifiedBookDTO(
     val id: Int,
-    val createdDate: String,
+    val createdDate: String?,
     val publisher: String,
     val title: String,
     val link: String,
