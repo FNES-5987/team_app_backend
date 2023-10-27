@@ -18,10 +18,12 @@ class BookController(private val bookService: BookService) {
     @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
         val books = bookService.addBook(book)
-                println("AddBooks 응답 성공")
         return if (books.isNotEmpty()) {
+            println("AddBooks: 도서 추가됨")
             ResponseEntity.ok(books)
+
         } else {
+            println("AddBooks: 기존의 도서로 추가 안됨.")
             ResponseEntity.status(HttpStatus.CONFLICT).body(emptyList())
         }
     }
