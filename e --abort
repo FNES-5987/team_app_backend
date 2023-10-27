@@ -1,0 +1,53 @@
+[33mcommit c4b065ce400b0256f1d935e9beb7769e68211ebd[m[33m ([m[1;36mHEAD -> [m[1;32mmodules/admin[m[33m)[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Fri Oct 27 18:13:41 2023 +0900
+
+    테이블 자동생성->redish에 추가되게-> redish != mysql오류 해결
+
+[33mcommit 33a8f846c4a50450fb88094596060dbd54a1d1a2[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Fri Oct 27 10:33:43 2023 +0900
+
+    오류수정:mysql==redis 체크-> 응답:조건 추가 및 수정
+
+[33mcommit 8cdddbdadd5b445040d22ef35da3aabb473e8821[m[33m ([m[1;31morigin/modules/admin[m[33m)[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Thu Oct 26 21:56:50 2023 +0900
+
+    redis에 DB업데이트 정보 반영 부분 수정
+
+[33mcommit fa46d10956a2339b758e7c627a28756e1c6a0d87[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Wed Oct 25 14:41:26 2023 +0900
+
+     DB추가시, 중복 및 오류 관련 로직 추가
+
+[33mcommit aa75bafe65bf1f31fe83a4c0d134d5d33bb57528[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Tue Oct 24 21:55:05 2023 +0900
+
+    추가에 따른 캐쉬 업데이트(완료)
+
+[33mcommit 99d4e8ece9ae4cf1139861daf31ac253b41a626b[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Tue Oct 24 10:06:05 2023 +0900
+
+    redis/mysql/cache/비동기update처리/!cacheData.i
+
+[33mcommit 10436add6d5541112028bfe356ff9140ba77fd2e[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Fri Oct 20 19:09:18 2023 +0900
+
+    1020
+
+[33mcommit f14d6d9d72fc0ff02ce251f7d8615a429e6c034d[m
+Author: Sohyun kim <rlathgus541@naver.com>
+Date:   Fri Oct 20 17:51:01 2023 +0900
+
+    폴더위치 파일명 수정
+
+[33mcommit 5b3429b05372753d8594f28703597f0686e26920[m
+Author: JBJ <maystar5987@gmail.com>
+Date:   Fri Oct 20 14:44:11 2023 +0900
+
+    backend defalut
