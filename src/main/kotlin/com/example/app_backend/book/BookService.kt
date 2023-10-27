@@ -2,6 +2,7 @@ package com.example.app_backend.book
 
 import com.example.app_backend.api.SimplifiedBooks
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+// JSON 문자열을 코틀린으로
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.deleteWhere
@@ -23,40 +24,49 @@ class BookService(
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
 
+//    @Scheduled(fixedRate = 1000 * 60 * 60 *24) // 24시간마다 실행
+//    fun refreshCache() {
+//        println("Refreshing cache...")
+//        val booksFromDB = getBooks()
+//        redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
+//    }
+
     fun getCacheBooks(): List<SimplifiedBookDTO> {
 //        println("cache 요청 들어 옴")
         // 성능 측정 시작 시간
         val start = System.currentTimeMillis()
         // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
         val cacheData = redisTemplate.opsForValue().get("books")
+        val booksFromDB = getBooks()
         return if (!cacheData.isNullOrEmpty()) {
-            println("Data from Redis")
-//            JSON 문자열을 List<SimplifiedBookDTO> 타입으로 변환하여 반환
-//            println("Cacheed data: $cacheedData")
-            try {
-                mapper.readValue(cacheData)
-
+            val booksFromCache = try {
+//               readValue: JSON 문자열을 코틀린의 리스트 객체로 변환
+                //typeOf<T>(cacheData)
+                mapper.readValue<List<SimplifiedBookDTO>>(cacheData)
             } catch (e: JsonParseException) {
                 println("Json parsing error: ${e.message}")
-                emptyList()
+                emptyList<SimplifiedBookDTO>()
             }
 
+            // 캐시 데이터와 DB 데이터 일치 여부 확인
+            if (booksFromCache == booksFromDB) {
+                println("Data from Redis")
+                booksFromCache
+            } else {
+                println("Data from MySQL")
+                // 캐시 데이터와 DB 데이터 불일치 시, 캐시 업데이트
+                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
+                booksFromDB
+            }
         } else {
             println("Data from MySQL")
-            // DB 가져옴 (호출)
-            val books = getBooks()
-            //가져온 리스트를 JSON 문자열로 변환하여 "books"라는 키로 Redis 캐시에 저장
-//            redisTemplate.opsForValue().set("books", mapper.writeValueAsString(books))
-//            val jsonString = mapper.writeValueAsString(books)
-//            println("JSON string: $jsonString")
-            redisTemplate.opsForValue().set("books", mapper.writeValueAsString(books))
-
+            // 캐시에 데이터 없을 시, 캐시 업데이트
+            redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
+            booksFromDB
+        }.also {
             val end = System.currentTimeMillis()
             println("Time taken: ${end - start} ms")
-//            가져온 책의 리스트를 반환
-            return books
         }
-
     }
 
     // 최신 DB정보 cache에 업데이트
