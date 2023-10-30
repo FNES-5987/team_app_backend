@@ -44,6 +44,7 @@ class BookController(private val bookService: BookService) {
         }
     }
 
+    //수정
     @PutMapping("/{itemId}")
     fun updateBook(
         @PathVariable itemId: Int,
