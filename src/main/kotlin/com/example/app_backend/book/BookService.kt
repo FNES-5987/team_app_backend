@@ -4,10 +4,9 @@ import com.example.app_backend.api.SimplifiedBooks
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 // JSON 문자열을 코틀린으로
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.deleteWhere
-import org.jetbrains.exposed.sql.insertAndGetId
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.boot.json.JsonParseException
 import org.springframework.data.redis.core.RedisTemplate
@@ -33,23 +32,18 @@ class BookService(
                     println("Last book: $lastBook")
                 }
             }
+
             is List<*> -> {
                 val lastBook = cacheData.lastOrNull()
-                println("Last updated book: $lastBook")
+//                println("Last updated book: $lastBook")
             }
+
             else -> {
                 println("Unsupported type")
             }
         }
     }
-
-//    @Scheduled(fixedRate = 1000 * 60 * 60 *24) // 24시간마다 실행
-//    fun refreshCache() {
-//        println("Refreshing cache...")
-//        val booksFromDB = getBooks()
-//        redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
-//    }
-
+// redisTemplate 방식
     fun getCacheBooks(): List<SimplifiedBookDTO> {
 //        println("cache 요청 들어 옴")
         // 성능 측정 시작 시간
@@ -58,7 +52,6 @@ class BookService(
         val cacheData = redisTemplate.opsForValue().get("books")
         println("2.조회: redis cache 업데이트 확인")
         checkLast(cacheData)
-
 
 
         val booksFromDB = getBooks()
@@ -79,10 +72,9 @@ class BookService(
                 println("3. redis cache 업데이트 확인")
                 checkLast(cacheData)
                 booksFromCache
-            } else{
+            } else {
                 println("Data from MySQL")
                 // 캐시 데이터와 DB 데이터 불일치 시, 캐시 업데이트
-                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
                 redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
                 val cacheData = redisTemplate.opsForValue().get("books")
                 println("DB와 일치 하지 않을떄")
@@ -92,7 +84,7 @@ class BookService(
         } else {
             println("Data from MySQL")
             // 캐시에 데이터 없을 시, 캐시 업데이트
-            val cacheData =redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
+            val cacheData = redisTemplate.opsForValue().set("books", mapper.writeValueAsString(booksFromDB))
             checkLast(cacheData)
             println("redis null일때:")
             booksFromDB
@@ -102,8 +94,14 @@ class BookService(
         }
     }
 
-    // cache에 업데이트
-    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedItemId: Int? = null): List<SimplifiedBookDTO> {
+
+
+
+    // redisTemplate 방식: 기존 방식 cache에 redis 전체 업데이트 (현상황 api 신규도서 추가와의 일관성 부분 안전성 추구)
+    //getbooks()대신 redis에서 도서정보 가져옴.
+    //getCacheBooks() 에서 일관성 유지 가능
+    //
+    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedItemIds: List<Int>? = null): List<SimplifiedBookDTO> {
         println("updateCache 요청 들어 옴")
         // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
         val cacheData = redisTemplate.opsForValue().get("books")
@@ -112,40 +110,40 @@ class BookService(
         } else {
             emptyList()
         }
-        if (deletedItemId != null) {
-            println("삭제 요청 들어 옴")
+
+        if (deletedItemIds != null) {
+            println("updateCache 삭제 요청 옴.")
             // db 가져옴
 
             // 일치하는 것 제외하고 새로운 데이터로 set함.
-            val updatedBooks = booksFromCache.filterNot { it.itemId == deletedItemId }
+            val updatedBooks = booksFromCache.filterNot { it.itemId in deletedItemIds }
             redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-            println("Updated cache: ${redisTemplate.opsForValue().get("books")}")
+//            println("Updated cache: ${redisTemplate.opsForValue().get("books")}")
             return updatedBooks
         }
 
         if (newBook != null) {
-            println("추가 요청 들어 옴")
-            // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
+            val isNewBook = booksFromCache.none { it.itemId == newBook.itemId }
+            val isExistingBook = booksFromCache.any { it.itemId == newBook.itemId }
 
-            // 새로운 책이 있다면, redis에 새로운 책 정보를 추가
-            val isNewBook = booksFromCache.none { it.itemId == newBook.itemId  }
             if (isNewBook) {
-                // String->빈 배열 체크X
-                val booksList = if (cacheData != null) {
-                    mapper.readValue<List<SimplifiedBookDTO>>(cacheData)
-                } else {
-                    emptyList()
-                }
-
-                val updatedBooks = booksList + newBook
+                println("updateCache 추가 요청 옴")
+                // 새로운 책을 추가
+                val updatedBooks = booksFromCache + newBook
                 redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-                println("1. 조회: redis cache 업데이트 확인:")
-                checkLast(updatedBooks)
+//                println("Updated cache with new book: ${redisTemplate.opsForValue().get("books")}")
+                return updatedBooks
+            } else if (isExistingBook) {
+                println("updateCache 수정 요청 옴")
+                // 기존 책 정보를 삭제하고, 수정된 책 정보를 추가
+                val updatedBooks = booksFromCache.map {
+                    if (it.itemId == newBook.itemId) newBook else it
+                }
+                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
+//                println("Updated cache with updated book: ${redisTemplate.opsForValue().get("books")}")
                 return updatedBooks
             }
-            println("추가요청 redis 반영됨")
         }
-
         // 아무런 변경이 없으면 기존 정보 반환
         return getBooks()
     }
@@ -179,15 +177,16 @@ class BookService(
         }
     }
 
-//mysql DB
+    val currentTime = LocalDateTime.now()
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm")
+    val formattedDate = currentTime.format(formatter)
+
+    //mysql DB
     fun addBook(book: SimplifiedBookDTO): List<SimplifiedBookDTO> {
         println("addBook 요청 들어옴")
         val existingBooks = getBooks()
         val isBook = existingBooks.filter { it.itemId == book.itemId }
         if (isBook.isEmpty()) {
-            val currentTime = LocalDateTime.now()
-            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH:mm")
-            val formattedDate = currentTime.format(formatter)
             // DB에 책을 추가
             val addBook = transaction {
                 SimplifiedBooks.insertAndGetId {
@@ -217,13 +216,17 @@ class BookService(
         return emptyList()
     }
 
-    fun deleteBook(itemId: Int): List<SimplifiedBookDTO> {
+    fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
+        println("deleteBooks 요청 들어옴")
+        println("삭제 요청 리스트 데이터:${itemIds}")
         // DB에서 책을 삭제
         transaction {
-            SimplifiedBooks.deleteWhere { SimplifiedBooks.id eq itemId }
+            SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
         }
-
-        // 캐시 업데이트
-        return updateCache(deletedItemId = itemId)
+//        println("deleteBooks 응답:${updateCache(deletedItemIds = itemIds)} ")
+        // 삭제된 캐시 업데이트
+        return updateCache(deletedItemIds = itemIds)
     }
+
+
 }

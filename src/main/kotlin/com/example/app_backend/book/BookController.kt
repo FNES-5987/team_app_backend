@@ -28,12 +28,35 @@ class BookController(private val bookService: BookService) {
         }
     }
 
-    @DeleteMapping("/{bookItemId}")
-    fun deleteBook(@PathVariable bookId: Int): ResponseEntity<List<SimplifiedBookDTO>> {
+    @DeleteMapping
+    fun deleteBooks(@RequestParam("itemIds") itemIds: List<Int>): ResponseEntity<Map<String, Any>> {
         // DB 업데이트 기능 포함
-        val updatedBooks = bookService.deleteBook(bookId)
-        println("deleteBooks 응답 성공")
-        return ResponseEntity.ok(updatedBooks)
+        println("서버 삭제 응답:${itemIds}")
+        return try {
+            val deletedBookIds = bookService.deleteBooks(itemIds)
+            val response = mapOf(
+                "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
+                "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
+            )
+            ResponseEntity.ok(response)
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to (e.message ?: "Unknown error")))
+        }
     }
+
+    @PutMapping("/{itemId}")
+    fun updateBook(
+        @PathVariable itemId: Int,
+        @RequestBody updatedData: SimplifiedBookDTO
+    ): ResponseEntity<SimplifiedBookDTO> {
+        return try {
+            val updatedBook = bookService.modifyBook(itemId, updatedData)
+            ResponseEntity.ok(updatedBook)
+        } catch (e: Exception) {
+//           500 Internal Server Error+응답 본문을 null 반환
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null)
+        }
+    }
+
 
 }
