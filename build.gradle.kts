@@ -55,6 +55,8 @@ dependencies {
 
     implementation ("redis.clients:jedis:3.7.0")
     implementation ("org.springframework.boot:spring-boot-starter-data-redis")
+
+    implementation ("com.rabbitmq:amqp-client:5.13.0")
 }
 
 dependencyManagement {

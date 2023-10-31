@@ -1,4 +1,4 @@
-package com.example.app_backend.inventory
+package com.example.app_backend.manager.inventory
 
 // data.kt
 

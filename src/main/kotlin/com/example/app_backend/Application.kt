@@ -1,6 +1,6 @@
 package com.example.app_backend
 
-import com.example.app_backend.redis.cacheInventoryInRedis
+import com.example.app_backend.manager.redis.cacheInventoryInRedis
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching

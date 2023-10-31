@@ -1,4 +1,4 @@
-package com.example.app_backend.redis
+package com.example.app_backend.manager.redis
 
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody

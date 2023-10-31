@@ -1,6 +1,6 @@
-package com.example.app_backend.statistics
+package com.example.app_backend.manager.statistics
 
-import com.example.app_backend.redis.RedisService
+import com.example.app_backend.manager.redis.RedisService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController

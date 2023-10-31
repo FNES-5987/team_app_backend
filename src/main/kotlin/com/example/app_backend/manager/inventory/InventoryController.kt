@@ -1,4 +1,4 @@
-package com.example.app_backend.inventory
+package com.example.app_backend.manager.inventory
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
@@ -52,25 +52,25 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
 
             val content = i
                 .selectAll()
-                .orderBy(i.id to SortOrder.DESC)
+                .orderBy(Inventories.id to SortOrder.DESC)
                 .limit(size, offset = (size * page).toLong())
                 .map {
                     r -> InventoryResponse(
-                        r[i.id],
-                        r[i.publisher],
-                        r[i.title],
-                        r[i.link],
-                        r[i.author],
-                        r[i.pubDate],
-                        r[i.isbn],
-                        r[i.isbn13],
-                        r[i.itemId],
-                        r[i.categoryId],
-                        r[i.categoryName],
-                        r[i.priceSales],
-                        r[i.priceStandard],
-                        r[i.stockStatus],
-                        r[i.cover],
+                        r[Inventories.id],
+                        r[Inventories.publisher],
+                        r[Inventories.title],
+                        r[Inventories.link],
+                        r[Inventories.author],
+                        r[Inventories.pubDate],
+                        r[Inventories.isbn],
+                        r[Inventories.isbn13],
+                        r[Inventories.itemId],
+                        r[Inventories.categoryId],
+                        r[Inventories.categoryName],
+                        r[Inventories.priceSales],
+                        r[Inventories.priceStandard],
+                        r[Inventories.stockStatus],
+                        r[Inventories.cover],
                     )
                 }
             val totalCount = i.selectAll().count()
@@ -175,7 +175,8 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
                 record[Inventories.priceStandard ],
                 record[Inventories.stockStatus ] ,
                 record[Inventories.cover ],
-            ))
+            )
+            )
         }
 
         if(result) {
@@ -200,7 +201,8 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
 
     @PutMapping("/{id}")
     fun modify(@PathVariable id : Long,
-               @RequestBody request: InventoryModifyRequest): ResponseEntity<Any> {
+               @RequestBody request: InventoryModifyRequest
+    ): ResponseEntity<Any> {
 
         if(request.title.isNullOrEmpty() && request.publisher.isNullOrEmpty()) {
             return ResponseEntity
@@ -209,11 +211,11 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
         }
 
         transaction {
-            Inventories.select{Inventories.id eq id}.firstOrNull()
+            Inventories.select{ Inventories.id eq id}.firstOrNull()
         } ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 
         transaction {
-            Inventories.update({Inventories.id eq id}) {
+            Inventories.update({ Inventories.id eq id}) {
                 if (request.publisher != null) {
                     it[publisher] = request.publisher
                 }

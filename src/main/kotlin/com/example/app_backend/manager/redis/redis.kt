@@ -1,4 +1,4 @@
-package com.example.app_backend.redis
+package com.example.app_backend.manager.redis
 
 import redis.clients.jedis.Jedis
 import java.sql.DriverManager

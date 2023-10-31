@@ -1,6 +1,6 @@
-package com.example.app_backend.redis
+package com.example.app_backend.manager.redis
 
-import com.example.app_backend.statistics.RedisData
+import com.example.app_backend.manager.statistics.RedisData
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ScanOptions
 import org.springframework.stereotype.Service
