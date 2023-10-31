@@ -2,7 +2,6 @@ package com.example.app_backend.inventory
 
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.like
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.core.io.ResourceLoader
 import org.springframework.data.domain.Page
@@ -84,14 +83,21 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
     }
 
     @GetMapping("/paging/search")
-    fun searchPaging(@RequestParam size : Int, @RequestParam page : Int, @RequestParam keyword : String?) : Page<InventoryResponse>
-            = transaction(Connection.TRANSACTION_READ_UNCOMMITTED, readOnly = true) {
-        // 검색 조건 생성
-        val query = when {
-            keyword != null -> Inventories.select {
-                (Inventories.title like "%${keyword}%") or
-                        (Inventories.publisher like "%${keyword}%" ) }
-            else -> Inventories.selectAll()
+    fun searchPaging(
+        @RequestParam size: Int,
+        @RequestParam page: Int,
+        @RequestParam title: String?,
+        @RequestParam publisher: String?,
+        @RequestParam itemId: String?,
+    ): Page<InventoryResponse> = transaction(Connection.TRANSACTION_READ_UNCOMMITTED, readOnly = true) {
+        val query = Inventories.selectAll()
+
+        if (title != null) {
+            query.andWhere { Inventories.title like "%${title}%" }
+        } else if (publisher != null) {
+            query.andWhere { Inventories.publisher like "%${publisher}%" }
+        } else if (itemId != null) {
+            query.andWhere { Inventories.itemId eq (itemId.toIntOrNull() ?: 0) }
         }
 
         // 전체 결과 카운트
@@ -100,7 +106,7 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
         // 페이징 조회
         val content = query
             .orderBy(Inventories.id to SortOrder.DESC)
-            .limit(size, offset= (size * page).toLong())
+            .limit(size, offset = (size * page).toLong())
             .map { r ->
                 InventoryResponse(
                     r[Inventories.id],
@@ -122,7 +128,7 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
             }
 
         // Page 객체로 리턴
-        PageImpl(content, PageRequest.of(page, size),  totalCount)
+        PageImpl(content, PageRequest.of(page, size), totalCount)
     }
 
     @PostMapping
