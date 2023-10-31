@@ -1,11 +1,11 @@
 package com.example.app_backend.book
 
 import com.example.app_backend.api.SimplifiedBooks
+import com.example.app_backend.api.TodayBooks
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 // JSON 문자열을 코틀린으로
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.boot.json.JsonParseException
@@ -16,9 +16,9 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class BookService(
-    // 중간 저장소
-    // String 타입의 키와 값으로 데이터를 저장하거나 조회
-    private val redisTemplate: RedisTemplate<String, String>
+        // 중간 저장소
+        // String 타입의 키와 값으로 데이터를 저장하거나 조회
+        private val redisTemplate: RedisTemplate<String, String>
 ) {
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
@@ -43,7 +43,8 @@ class BookService(
             }
         }
     }
-// redisTemplate 방식
+
+    // redisTemplate 방식
     fun getCacheBooks(): List<SimplifiedBookDTO> {
 //        println("cache 요청 들어 옴")
         // 성능 측정 시작 시간
@@ -231,24 +232,24 @@ class BookService(
         return transaction {
             SimplifiedBooks.selectAll().map { row ->
                 SimplifiedBookDTO(
-                    id = row[SimplifiedBooks.id].value,
-                    createdDate = row[SimplifiedBooks.createdDate],
-                    publisher = row[SimplifiedBooks.publisher],
-                    title = row[SimplifiedBooks.title],
-                    link = row[SimplifiedBooks.link],
-                    author = row[SimplifiedBooks.author],
-                    pubDate = row[SimplifiedBooks.pubDate],
-                    description = row[SimplifiedBooks.description],
-                    isbn = row[SimplifiedBooks.isbn],
-                    isbn13 = row[SimplifiedBooks.isbn13],
-                    itemId = row[SimplifiedBooks.itemId],
-                    priceSales = row[SimplifiedBooks.priceSales],
-                    priceStandard = row[SimplifiedBooks.priceStandard],
-                    stockStatus = row[SimplifiedBooks.stockStatus],
-                    cover = row[SimplifiedBooks.cover],
-                    categoryId = row[SimplifiedBooks.categoryId],
-                    categoryName = row[SimplifiedBooks.categoryName],
-                    customerReviewRank = row[SimplifiedBooks.customerReviewRank]
+                        id = row[SimplifiedBooks.id].value,
+                        createdDate = row[SimplifiedBooks.createdDate],
+                        publisher = row[SimplifiedBooks.publisher],
+                        title = row[SimplifiedBooks.title],
+                        link = row[SimplifiedBooks.link],
+                        author = row[SimplifiedBooks.author],
+                        pubDate = row[SimplifiedBooks.pubDate],
+                        description = row[SimplifiedBooks.description],
+                        isbn = row[SimplifiedBooks.isbn],
+                        isbn13 = row[SimplifiedBooks.isbn13],
+                        itemId = row[SimplifiedBooks.itemId],
+                        priceSales = row[SimplifiedBooks.priceSales],
+                        priceStandard = row[SimplifiedBooks.priceStandard],
+                        stockStatus = row[SimplifiedBooks.stockStatus],
+                        cover = row[SimplifiedBooks.cover],
+                        categoryId = row[SimplifiedBooks.categoryId],
+                        categoryName = row[SimplifiedBooks.categoryName],
+                        customerReviewRank = row[SimplifiedBooks.customerReviewRank]
                 )
             }
         }
@@ -287,6 +288,7 @@ class BookService(
                 }
             }
             //데이터베이스에 책을 추가한 후, 반환된 ID(addBook)를 사용-> 자동생성기능도 업데이트
+            // 새로운 SimplifiedBookDTO 객체를 생성
             val newBook = book.copy(id = addBook.value, createdDate = formattedDate)
             return updateCache(newBook)
         }
@@ -342,29 +344,71 @@ class BookService(
     fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
         return transaction {
             SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
-                .map { row ->
-                    SimplifiedBookDTO(
-                        id = row[SimplifiedBooks.id].value,
-                        createdDate = row[SimplifiedBooks.createdDate],
-                        publisher = row[SimplifiedBooks.publisher],
-                        title = row[SimplifiedBooks.title],
-                        link = row[SimplifiedBooks.link],
-                        author = row[SimplifiedBooks.author],
-                        pubDate = row[SimplifiedBooks.pubDate],
-                        description = row[SimplifiedBooks.description],
-                        isbn = row[SimplifiedBooks.isbn],
-                        isbn13 = row[SimplifiedBooks.isbn13],
-                        itemId = row[SimplifiedBooks.itemId],
-                        priceSales = row[SimplifiedBooks.priceSales],
-                        priceStandard = row[SimplifiedBooks.priceStandard],
-                        stockStatus = row[SimplifiedBooks.stockStatus],
-                        cover = row[SimplifiedBooks.cover],
-                        categoryId = row[SimplifiedBooks.categoryId],
-                        categoryName = row[SimplifiedBooks.categoryName],
-                        customerReviewRank = row[SimplifiedBooks.customerReviewRank]
-                    )
-                }
-                .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
+                    .map { row ->
+                        SimplifiedBookDTO(
+                                id = row[SimplifiedBooks.id].value,
+                                createdDate = row[SimplifiedBooks.createdDate],
+                                publisher = row[SimplifiedBooks.publisher],
+                                title = row[SimplifiedBooks.title],
+                                link = row[SimplifiedBooks.link],
+                                author = row[SimplifiedBooks.author],
+                                pubDate = row[SimplifiedBooks.pubDate],
+                                description = row[SimplifiedBooks.description],
+                                isbn = row[SimplifiedBooks.isbn],
+                                isbn13 = row[SimplifiedBooks.isbn13],
+                                itemId = row[SimplifiedBooks.itemId],
+                                priceSales = row[SimplifiedBooks.priceSales],
+                                priceStandard = row[SimplifiedBooks.priceStandard],
+                                stockStatus = row[SimplifiedBooks.stockStatus],
+                                cover = row[SimplifiedBooks.cover],
+                                categoryId = row[SimplifiedBooks.categoryId],
+                                categoryName = row[SimplifiedBooks.categoryName],
+                                customerReviewRank = row[SimplifiedBooks.customerReviewRank]
+                        )
+                    }
+                    .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
         }
     }
+
+    fun addTodayBook(book: TodayBookDTO): TodayBookDTO {
+        val addedBookId = transaction {
+            TodayBooks.insertAndGetId {
+
+                it[title] = book.title
+                it[author] = book.author
+                it[priceSales] = book.priceSales
+                it[cover] = book.cover
+                it[todayLetter] = book.todayLetter
+                it[itemId] = book.itemId
+                it[readData]=book.readDate
+            }
+        }
+        println("추가된 오늘ㄹ의 도서 정보: ${book}")
+        return book.copy(itemId = addedBookId.value)
+    }
+    fun getTodayBooks(readDate: String? = null): TodayBookDTO? {
+        println("getTodayBooks() called")
+        return transaction {
+            val query = if (readDate != null) {
+                TodayBooks.select { TodayBooks.readData eq readDate }
+            } else {
+                TodayBooks.selectAll()
+            }
+
+            query.map { row ->
+                TodayBookDTO(
+                        title = row[TodayBooks.title],
+                        author = row[TodayBooks.author],
+                        priceSales = row[TodayBooks.priceSales],
+                        cover = row[TodayBooks.cover],
+                        todayLetter = row[TodayBooks.todayLetter],
+                        itemId = row[TodayBooks.itemId],
+                        readDate = row[TodayBooks.readData]
+                )
+            }
+                    .singleOrNull()
+        }
+    }
+
 }
+

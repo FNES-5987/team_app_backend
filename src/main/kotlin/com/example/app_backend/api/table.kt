@@ -2,6 +2,7 @@ package com.example.app_backend.api
 
 import jakarta.annotation.PostConstruct
 import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Table
@@ -86,7 +87,24 @@ object SimplifiedBooks : IntIdTable("simplified_book"){
     val categoryName = varchar("category_name", 255)
     val customerReviewRank = integer("customer_review_rank")
     }
+object TodayBooks : IntIdTable("today_book") {
+    val cover = varchar("cover", 512)
+    val title = varchar("title", 512)
+    val author = varchar("author", 512)
+    val priceSales = integer("price_sales")
+    val todayLetter = varchar("today_letter", 512)
+    val itemId = integer("item_id").uniqueIndex()
+    val readData = varchar("read_date", 20)
+}
 
+object Profiles : LongIdTable("profile") {
+    val email = varchar("email", 200)
+    val nickname = varchar("nickname", 100)
+    val phone = varchar("phone", 15)
+    val identityId = reference("identity_id", Identities)
+    val birth = varchar("birth", 7)
+    val bookmark = varchar("bookmark", 15)
+}
 
 
 
@@ -133,3 +151,24 @@ class SimplifiedBooksTableSetup(private val database: Database) {
         }
     }
 }
+
+@Configuration
+class TodayBooksTableSetup(private val database: Database) {
+    @PostConstruct
+    fun migrateSchema() {
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(TodayBooks)
+        }
+    }
+
+
+}
+
+@Configuration
+class profileTableSetup(private val database: Database) {
+    @PostConstruct
+    fun migrateSchema() {
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(profile)
+        }
+    }

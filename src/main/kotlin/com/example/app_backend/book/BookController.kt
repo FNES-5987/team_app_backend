@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/books")
+@RequestMapping("/books")
 // Service 주입
 class BookController(private val bookService: BookService) {
     @GetMapping("/cache")
@@ -14,6 +14,7 @@ class BookController(private val bookService: BookService) {
 //        println("cacheBooks 응답 성공")
         return cachedBooks
     }
+
     // 추가
     @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
@@ -35,20 +36,21 @@ class BookController(private val bookService: BookService) {
         return try {
             val deletedBookIds = bookService.deleteBooks(itemIds)
             val response = mapOf(
-                "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
-                "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
+                    "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
+                    "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
             )
             ResponseEntity.ok(response)
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to (e.message ?: "Unknown error")))
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to (e.message
+                    ?: "Unknown error")))
         }
     }
 
     //수정
     @PutMapping("/{itemId}")
     fun updateBook(
-        @PathVariable itemId: Int,
-        @RequestBody updatedData: SimplifiedBookDTO
+            @PathVariable itemId: Int,
+            @RequestBody updatedData: SimplifiedBookDTO
     ): ResponseEntity<SimplifiedBookDTO> {
         return try {
             val updatedBook = bookService.modifyBook(itemId, updatedData)
@@ -59,5 +61,39 @@ class BookController(private val bookService: BookService) {
         }
     }
 
+    // 오늘의 책
+    @PostMapping("/today")
+    fun createTodayBook(@RequestParam("itemId") itemId: Int, @RequestParam("todayLetter") todayLetter: String, @RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO>{
+        // DB에서 book 정보를 가져옵니다.
+        val simplifiedBook = bookService.getBookByItemId(itemId)
+        if (simplifiedBook != null) {
+            val todayBook = TodayBookDTO(
+                    cover = simplifiedBook.cover,
+                    title = simplifiedBook.title,
+                    author = simplifiedBook.author,
+                    priceSales = simplifiedBook.priceSales,
+                    todayLetter = todayLetter,
+                    itemId = itemId,
+                    readDate =readDate
+            )
+            val savedTodayBook = bookService.addTodayBook(todayBook)
+            println("추가된 오늘의 도서: ${savedTodayBook}")
+            return ResponseEntity.ok(savedTodayBook)
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
+        }
+    }
+    @CrossOrigin(origins = ["http://192.168.100.36:8081"])
+    @GetMapping("/today")
+    fun getLatestTodayBook(@RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {
+        println("오늘의책 get요청")
+        val todayBook = bookService.getTodayBooks(readDate)
+        println("응답 오늘의 책: ${todayBook}")
+        return if (todayBook != null) {
+            ResponseEntity.ok(todayBook)
+        } else {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        }
+    }
 
 }
