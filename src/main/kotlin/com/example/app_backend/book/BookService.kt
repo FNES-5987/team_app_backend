@@ -95,48 +95,6 @@ class BookService(
         }
     }
 
-
-//    // redis HashMap방식:
-//    fun getCacheBooks(): List<SimplifiedBookDTO> {
-//        // 성능 측정 시작 시간
-//        val start = System.currentTimeMillis()
-//        // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
-//        val cacheData = redisTemplate.opsForHash<Any, Any>().entries("books").values.map {
-//            mapper.readValue<SimplifiedBookDTO>(it.toString())
-//        }
-//        println("2. 조회: Redis cache 업데이트 확인")
-//        checkLast(cacheData)
-//
-//        val booksFromDB = getBooks()
-//        return if (cacheData.isNotEmpty()) {
-//            // 캐시 데이터와 DB 데이터 일치 여부 확인
-//            if (cacheData == booksFromDB) {
-//                println("Data from Redis")
-//                cacheData
-//            } else {
-//                println("redisData from MySQL")
-//                // 캐시 데이터와 DB 데이터 불일치 시, 캐시 업데이트
-//                redisTemplate.opsForHash<Any, Any>().putAll("books", booksFromDB.associateBy { it.itemId.toString() })
-//                println("DB와 일치 하지 않을 때")
-//                cacheData
-//            }
-//        } else {
-//            println("Data from MySQL")
-//            // 캐시에 데이터 없을 시, 캐시 업데이트
-//            redisTemplate.opsForHash<Any, Any>().putAll("books", booksFromDB.associateBy { it.itemId.toString() })
-//            println("Redis cache가 비어 있을 때")
-//            booksFromDB
-//        }.also {
-//            val end = System.currentTimeMillis()
-//            println("Time taken: ${end - start} ms")
-//        }
-//    }
-
-
-    // redisTemplate 방식: 기존 방식 cache에 redis 전체 업데이트 (현상황 api 신규도서 추가와의 일관성 부분 안전성 추구)
-    //getbooks()대신 redis에서 도서정보 가져옴.
-    //getCacheBooks() 에서 일관성 유지 가능
-    //
     fun updateCache(newBook: SimplifiedBookDTO? = null, deletedItemIds: List<Int>? = null): List<SimplifiedBookDTO> {
         println("updateCache 요청 들어 옴")
         // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
@@ -184,47 +142,6 @@ class BookService(
         return getBooks()
     }
 
-    // 변화있는 부분만 업데이트 (효율 추구)
-    // redis hashmap 사용
-//    fun updateCache(book: SimplifiedBookDTO? = null, deletedItemIds: List<Int>? = null): List<SimplifiedBookDTO> {
-//        println("updateCache 요청 들어 옴")
-//
-//        //  Redis에 저장된 도서 정보를 참조하기 위한 root key : 최상위 키
-//        val cacheKey = "books"
-//
-////redis-hashMap
-//        if (deletedItemIds != null) {
-//            println("updateCache 삭제 요청 옴.")
-//            deletedItemIds.forEach {//람다 표현식
-//                // books에서 (it= itemIds[i])에 해당하는 데이터 삭제
-////            Redis에서는 키를 문자열로 변환하여 저장하기 때문에, 키를 검색할 때도 문자열로 변환된 키를 사용해야 합니다.
-//                redisTemplate.opsForHash<Any, Any>().delete(cacheKey, it.toString())
-//            }
-//        }
-//
-//        if (book != null) {
-//            println("updateCache 추가/수정 요청 옴")
-////        book.itemId는 Hash 내에서 사용될 키, 이 키에 해당하는 값을 value로 설정
-////        만약 book.itemId 키가 이미 존재한다면, 해당 키의 값을 value로 업데이트
-//            redisTemplate.opsForHash<Any, Any>().put(cacheKey, book.itemId.toString(), mapper.writeValueAsString(book))
-//        }
-//// entries 메소드는 지정된 키(cacheKey)에 해당하는 해시의 모든 엔트리(키-값 쌍)를 Map 형태로 반환
-//// Map<String, String> map = new HashMap<>();
-//// map.put("1", "사과");
-//// map.put("2", "바나나");
-//// map.put("3", "체리");
-////
-////Collection<String> values = map.values();  // 맵에 저장된 모든 값을 Collection으로 반환
-//        //모든 값 리스트로 반환== colletion
-////System.out.println(values);  // 출력: [사과, 바나나, 체리]
-//        val updatedBooks = redisTemplate.opsForHash<Any, Any>().entries(cacheKey).values.map {
-////        entries(cacheKey).values ->entries 메소드로 반환된 Map에서 values 메소드를 호출하여, 모든 값들을 Collection 형태로 반환
-//            mapper.readValue<SimplifiedBookDTO>(it.toString())
-////      map 메소드는 컬렉션의 각 요소에 대해 주어진 함수를 적용한 결과를 새로운 컬렉션으로 반환합니다.
-//        }
-//
-//        return updatedBooks
-//    }
 
     // DB
     fun getBooks(): List<SimplifiedBookDTO> {
@@ -294,6 +211,34 @@ class BookService(
         }
         return emptyList()
     }
+    fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
+        return transaction {
+            SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
+                    .map { row ->
+                        SimplifiedBookDTO(
+                                id = row[SimplifiedBooks.id].value,
+                                createdDate = row[SimplifiedBooks.createdDate],
+                                publisher = row[SimplifiedBooks.publisher],
+                                title = row[SimplifiedBooks.title],
+                                link = row[SimplifiedBooks.link],
+                                author = row[SimplifiedBooks.author],
+                                pubDate = row[SimplifiedBooks.pubDate],
+                                description = row[SimplifiedBooks.description],
+                                isbn = row[SimplifiedBooks.isbn],
+                                isbn13 = row[SimplifiedBooks.isbn13],
+                                itemId = row[SimplifiedBooks.itemId],
+                                priceSales = row[SimplifiedBooks.priceSales],
+                                priceStandard = row[SimplifiedBooks.priceStandard],
+                                stockStatus = row[SimplifiedBooks.stockStatus],
+                                cover = row[SimplifiedBooks.cover],
+                                categoryId = row[SimplifiedBooks.categoryId],
+                                categoryName = row[SimplifiedBooks.categoryName],
+                                customerReviewRank = row[SimplifiedBooks.customerReviewRank]
+                        )
+                    }
+                    .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
+        }
+    }
 
     fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
         println("deleteBooks 요청 들어옴")
@@ -340,51 +285,22 @@ class BookService(
         return updatedBookData
     }
 
-    //
-    fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
-        return transaction {
-            SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
-                    .map { row ->
-                        SimplifiedBookDTO(
-                                id = row[SimplifiedBooks.id].value,
-                                createdDate = row[SimplifiedBooks.createdDate],
-                                publisher = row[SimplifiedBooks.publisher],
-                                title = row[SimplifiedBooks.title],
-                                link = row[SimplifiedBooks.link],
-                                author = row[SimplifiedBooks.author],
-                                pubDate = row[SimplifiedBooks.pubDate],
-                                description = row[SimplifiedBooks.description],
-                                isbn = row[SimplifiedBooks.isbn],
-                                isbn13 = row[SimplifiedBooks.isbn13],
-                                itemId = row[SimplifiedBooks.itemId],
-                                priceSales = row[SimplifiedBooks.priceSales],
-                                priceStandard = row[SimplifiedBooks.priceStandard],
-                                stockStatus = row[SimplifiedBooks.stockStatus],
-                                cover = row[SimplifiedBooks.cover],
-                                categoryId = row[SimplifiedBooks.categoryId],
-                                categoryName = row[SimplifiedBooks.categoryName],
-                                customerReviewRank = row[SimplifiedBooks.customerReviewRank]
-                        )
-                    }
-                    .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
-        }
-    }
 
     fun addTodayBook(book: TodayBookDTO): TodayBookDTO {
-        val addedBookId = transaction {
-            TodayBooks.insertAndGetId {
-
+        transaction {
+            TodayBooks.insert {
                 it[title] = book.title
                 it[author] = book.author
                 it[priceSales] = book.priceSales
                 it[cover] = book.cover
                 it[todayLetter] = book.todayLetter
                 it[itemId] = book.itemId
-                it[readData]=book.readDate
+                it[readData] = book.readDate
             }
         }
-        println("추가된 오늘ㄹ의 도서 정보: ${book}")
-        return book.copy(itemId = addedBookId.value)
+
+        println("추가된 오늘의 도서 정보: ${book}")
+        return book
     }
     fun getTodayBooks(readDate: String? = null): TodayBookDTO? {
         println("getTodayBooks() called")
@@ -394,7 +310,6 @@ class BookService(
             } else {
                 TodayBooks.selectAll()
             }
-
             query.map { row ->
                 TodayBookDTO(
                         title = row[TodayBooks.title],
@@ -409,6 +324,9 @@ class BookService(
                     .singleOrNull()
         }
     }
+
+
+
 
 }
 
