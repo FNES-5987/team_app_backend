@@ -68,7 +68,7 @@ object BookByPublisher : IntIdTable("book"){
     val customerReviewRank = integer("customer_review_rank")
 }
 
-object SimplifiedBooks : IntIdTable("simplified_book"){
+object SimplifiedBooks : LongIdTable("simplified_book"){
     val createdDate  = varchar("created_date", 20)
     val publisher = varchar("publisher",32)
     val title = varchar("title", 255)
