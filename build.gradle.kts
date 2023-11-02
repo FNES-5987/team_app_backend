@@ -41,15 +41,15 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-json:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-money:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
-
+    //JPA
+//    implementation ("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("at.favre.lib:bcrypt:0.10.2")
 
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
     implementation ("org.springframework.cloud:spring-cloud-starter-loadbalancer")
     implementation ("org.springframework.boot:spring-boot-starter-data-redis")
-    //JPA
-    implementation ("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("com.slack.api:slack-api-client:1.20.2")
 }
 
 dependencyManagement {

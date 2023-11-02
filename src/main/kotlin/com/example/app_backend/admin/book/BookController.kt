@@ -1,5 +1,6 @@
-package com.example.app_backend.book
+package com.example.app_backend.admin.book
 
+import org.jetbrains.exposed.sql.ResultRow
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -63,7 +64,7 @@ class BookController(private val bookService: BookService) {
 
     // 오늘의 책
     @PostMapping("/today")
-    fun createTodayBook(@RequestParam("itemId") itemId: Int, @RequestParam("todayLetter") todayLetter: String, @RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO>{
+    fun createTodayBook(@RequestParam("itemId") itemId: Int, @RequestParam("todayLetter") todayLetter: String, @RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {
         // DB에서 book 정보를 가져옵니다.
         val simplifiedBook = bookService.getBookByItemId(itemId)
         if (simplifiedBook != null) {
@@ -74,7 +75,7 @@ class BookController(private val bookService: BookService) {
                     priceSales = simplifiedBook.priceSales,
                     todayLetter = todayLetter,
                     itemId = itemId,
-                    readDate =readDate
+                    readDate = readDate
             )
             val savedTodayBook = bookService.addTodayBook(todayBook)
             println("추가된 오늘의 도서: ${savedTodayBook}")
@@ -83,6 +84,7 @@ class BookController(private val bookService: BookService) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
     }
+
     @CrossOrigin(origins = ["http://192.168.100.36:8081"])
     @GetMapping("/today")
     fun getLatestTodayBook(@RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {
@@ -96,4 +98,13 @@ class BookController(private val bookService: BookService) {
         }
     }
 
+    //통계
+    @GetMapping("/byBirth")
+    fun getBooksByBirth(@RequestParam birth: Int): List<ResultRow> {
+        return bookService.getBooksByBirth(birth)
+    }
+    @GetMapping("/byGender")
+    fun getBooksByGender(@RequestParam gender: Int): List<ResultRow> {
+        return bookService.getBooksByBirth(gender)
+    }
 }

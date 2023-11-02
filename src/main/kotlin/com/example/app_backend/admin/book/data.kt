@@ -1,4 +1,4 @@
-package com.example.app_backend.book
+package com.example.app_backend.admin.book
 
 // exposed 엔티티
 //DTO

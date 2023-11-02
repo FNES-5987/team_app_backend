@@ -68,7 +68,7 @@ object BookByPublisher : IntIdTable("book"){
     val customerReviewRank = integer("customer_review_rank")
 }
 
-object SimplifiedBooks : LongIdTable("simplified_book"){
+object SimplifiedBooks : IntIdTable("simplified_book"){
     val createdDate  = varchar("created_date", 20)
     val publisher = varchar("publisher",32)
     val title = varchar("title", 255)
@@ -96,17 +96,6 @@ object TodayBooks : IntIdTable("today_book") {
     val itemId = integer("item_id").uniqueIndex()
     val readData = varchar("read_date", 20)
 }
-
-object Profiles : LongIdTable("profile") {
-    val email = varchar("email", 200)
-    val nickname = varchar("nickname", 100)
-    val phone = varchar("phone", 15)
-    val birth = varchar("birth", 7)
-    val bookmark = varchar("bookmark", 15)
-}
-
-
-
 
     // sql-create (X)
 @Configuration

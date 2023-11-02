@@ -1,5 +1,7 @@
-package com.example.app_backend.book
+package com.example.app_backend.admin.book
 
+import com.example.app_backend.admin.rabbit.HitsRecords
+import com.example.app_backend.admin.user.Users
 import com.example.app_backend.api.SimplifiedBooks
 import com.example.app_backend.api.TodayBooks
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -19,6 +21,7 @@ class BookService(
         // 중간 저장소
         // String 타입의 키와 값으로 데이터를 저장하거나 조회
         private val redisTemplate: RedisTemplate<String, String>
+
 ) {
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
@@ -211,6 +214,7 @@ class BookService(
         }
         return emptyList()
     }
+
     fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
         return transaction {
             SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
@@ -302,6 +306,7 @@ class BookService(
         println("추가된 오늘의 도서 정보: ${book}")
         return book
     }
+
     fun getTodayBooks(readDate: String? = null): TodayBookDTO? {
         println("getTodayBooks() called")
         return transaction {
@@ -325,7 +330,76 @@ class BookService(
         }
     }
 
+    //통계조회
+    // 도서 DB 없을때 오류
+    val errorItemIds = mutableSetOf<Int>()
+    fun processBookView(itemId: Int) {
+        val book = findBookByItemId(itemId)
+        if (book == null) {
+            errorItemIds.add(itemId)
+            if (errorItemIds.size >= ERROR_THRESHOLD) {
+                reportErrorToAdmin(errorItemIds)
+                errorItemIds.clear()
+            }
+        } else {
+            findBookByItemId(itemId)
+        }
+    }
 
+    fun findBookByItemId(itemId: Int): Int? {
+        return SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
+                .singleOrNull()
+                ?.get(SimplifiedBooks.id)?.value
+    }
+
+    // 에러 관리
+    fun reportErrorToAdmin(errorItemIds: Set<Int>) {
+        // 이메일로 에러 리포트 보내기
+        sendErrorReportEmail(errorItemIds)
+
+        // 로그 파일에 에러 리포트 기록하기
+        logErrorReportToFile(errorItemIds)
+
+        // 알림 시스템에 에러 리포트 보내기
+        sendErrorReportNotification(errorItemIds)
+    }
+
+    fun sendErrorReportEmail(errorItemIds: Set<Int>) {
+        // 이메일로 에러 리포트 보내는 로직 구현
+        println("Sending email: Error ItemIds - $errorItemIds")
+    }
+
+    fun logErrorReportToFile(errorItemIds: Set<Int>) {
+        // 로그 파일에 에러 리포트 기록하는 로직 구현
+        println("Logging to file: Error ItemIds - $errorItemIds")
+    }
+
+    fun sendErrorReportNotification(errorItemIds: Set<Int>) {
+        // 알림 시스템에 에러 리포트 보내는 로직 구현
+        println("Sending notification: Error ItemIds - $errorItemIds")
+    }
+
+    companion object {
+        const val ERROR_THRESHOLD = 10
+    }
+
+    // User Select
+    fun getBooksByBirth(birth: Int): List<ResultRow> {
+        // 세 개의 테이블에 모두 해당하는 레코드만
+        return (SimplifiedBooks innerJoin HitsRecords innerJoin Users)
+                .select { Users.birth eq birth }
+                .groupBy(SimplifiedBooks.itemId, SimplifiedBooks.publisher, SimplifiedBooks.title, SimplifiedBooks.author, SimplifiedBooks.categoryName)
+                .orderBy(HitsRecords.hitsCount to SortOrder.DESC)
+                .map { it }
+    }
+    fun getBooksByGender(gender: Int): List<ResultRow> {
+        // 세 개의 테이블에 모두 해당하는 레코드만
+        return (SimplifiedBooks innerJoin HitsRecords innerJoin Users)
+                .select { Users.gender eq gender }
+                .groupBy(SimplifiedBooks.itemId, SimplifiedBooks.publisher, SimplifiedBooks.title, SimplifiedBooks.author, SimplifiedBooks.categoryName)
+                .orderBy(HitsRecords.hitsCount to SortOrder.DESC)
+                .map { it }
+    }
 
 
 }
