@@ -1,3 +1,5 @@
+// Book.java
 package com.example.app_backend.manager.publisher
 
-data class Publisher(val name: String, val count: Int)
+data class Book
+(val itemId: String, val title: String, val ISBN: String, val stockStatus: String)
