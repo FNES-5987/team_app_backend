@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 class RabbitConsumer {
     private val mapper = jacksonObjectMapper()
 
-    @RabbitListener(queues = ["order-queue"])
+    @RabbitListener(queues = ["create-order"])
     fun receive(message: String) {
         val orderSales: OrderSales = mapper.readValue(message)
         println("Received OrderSales: $orderSales")

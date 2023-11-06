@@ -1,8 +1,23 @@
 package com.example.app_backend.manager.redis
 
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
 import redis.clients.jedis.Jedis
 import java.sql.DriverManager
 import java.time.LocalDate
+
+@Configuration
+class RedisConfig {
+
+    @Bean
+    fun redisTemplate(connectionFactory: RedisConnectionFactory): RedisTemplate<String, Any> {
+        val template = RedisTemplate<String, Any>()
+        template.connectionFactory = connectionFactory
+        return template
+    }
+}
 
 fun cacheInventoryInRedis() {
     // MySQL 연결 설정
@@ -16,14 +31,14 @@ fun cacheInventoryInRedis() {
     val resultSet = statement.executeQuery("SELECT itemId, stockStatus FROM inventory")
 
     // Redis 연결 설정
-    val jedis = Jedis("localhost", 6379)
+    val jedis = Jedis("192.168.100.177", 6379)
 
     try {
         // 조회 결과를 Redis에 저장
         while (resultSet.next()) {
             val itemId = resultSet.getString("itemId")
             val stockStatus = resultSet.getString("stockStatus")
-            println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
+//            println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
             jedis.set(itemId, stockStatus)
 
             // SQL 연결 설정
@@ -54,7 +69,7 @@ fun getStockStatusFromRedis(itemId: String): Triple<String?, String?, String?> {
         val statusIncrease = jedis.get("$itemId:increase:$today")
         val statusDecrease = jedis.get("$itemId:decrease:$today")
 
-        println("Retrieved from Redis: $itemId -> $stockStatus (+$statusIncrease, -$statusDecrease) on $today")
+//        println("Retrieved from Redis: $itemId -> $stockStatus (+$statusIncrease, -$statusDecrease) on $today")
 
         return Triple(stockStatus, statusIncrease, statusDecrease)
     }
@@ -81,7 +96,7 @@ fun cacheInventoryInRedis(itemId: String, newStockStatus: String) {
         // 현재 날짜를 가져옴
         val today = LocalDate.now()
 
-        println("Saving to Redis: $itemId -> $newStockStatus (+$statusIncrease, -$statusDecrease) on $today") // 로깅 추가
+//        println("Saving to Redis: $itemId -> $newStockStatus (+$statusIncrease, -$statusDecrease) on $today") // 로깅 추가
         jedis.set(itemId, newStockStatus)
         jedis.set("$itemId:increase:$today", statusIncrease.toString())
         jedis.set("$itemId:decrease:$today", statusDecrease.toString())

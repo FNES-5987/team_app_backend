@@ -2,10 +2,7 @@ package com.example.app_backend.manager.statistics
 
 import com.example.app_backend.manager.redis.RedisService
 import org.springframework.format.annotation.DateTimeFormat
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
 @RestController
@@ -21,4 +18,13 @@ class StatisticsController(private val redisService: RedisService) {
         return redisService.getDataByDate(date)
     }
 
+    @DeleteMapping("/redis-data/all")
+    fun deleteAllData(): String {
+        return try {
+            redisService.flushAll()
+            "All data deleted successfully."
+        } catch (e: Exception) {
+            "Error deleting all data: ${e.message}"
+        }
+    }
 }

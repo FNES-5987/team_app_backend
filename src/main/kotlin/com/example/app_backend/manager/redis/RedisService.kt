@@ -29,5 +29,8 @@
 
             return redisDataList
         }
-
+        fun flushAll(): String {
+            redisTemplate.connectionFactory?.connection?.flushAll()
+            return "All data deleted successfully."
+        }
     }
