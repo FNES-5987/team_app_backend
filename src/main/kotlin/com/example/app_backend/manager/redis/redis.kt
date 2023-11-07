@@ -1,17 +1,13 @@
 package com.example.app_backend.manager.redis
 
-<<<<<<< HEAD
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-=======
->>>>>>> origin/modules/manager
 import redis.clients.jedis.Jedis
 import java.sql.DriverManager
 import java.time.LocalDate
 
-<<<<<<< HEAD
 @Configuration
 class RedisConfig {
 
@@ -23,8 +19,6 @@ class RedisConfig {
     }
 }
 
-=======
->>>>>>> origin/modules/manager
 fun cacheInventoryInRedis() {
     // MySQL 연결 설정
     val url = "jdbc:mysql://localhost:3306/books"
@@ -37,22 +31,14 @@ fun cacheInventoryInRedis() {
     val resultSet = statement.executeQuery("SELECT itemId, stockStatus FROM inventory")
 
     // Redis 연결 설정
-<<<<<<< HEAD
     val jedis = Jedis("192.168.100.177", 6379)
-=======
-    val jedis = Jedis("localhost", 6379)
->>>>>>> origin/modules/manager
 
     try {
         // 조회 결과를 Redis에 저장
         while (resultSet.next()) {
             val itemId = resultSet.getString("itemId")
             val stockStatus = resultSet.getString("stockStatus")
-<<<<<<< HEAD
 //            println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
-=======
-            println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
->>>>>>> origin/modules/manager
             jedis.set(itemId, stockStatus)
 
             // SQL 연결 설정
@@ -75,11 +61,7 @@ fun cacheInventoryInRedis() {
 }
 
 fun getStockStatusFromRedis(itemId: String): Triple<String?, String?, String?> {
-<<<<<<< HEAD
     Jedis("192.168.100.177", 6379).use { jedis ->
-=======
-    Jedis("localhost", 6379).use { jedis ->
->>>>>>> origin/modules/manager
         // 현재 날짜를 가져옴
         val today = LocalDate.now()
 
@@ -87,11 +69,7 @@ fun getStockStatusFromRedis(itemId: String): Triple<String?, String?, String?> {
         val statusIncrease = jedis.get("$itemId:increase:$today")
         val statusDecrease = jedis.get("$itemId:decrease:$today")
 
-<<<<<<< HEAD
 //        println("Retrieved from Redis: $itemId -> $stockStatus (+$statusIncrease, -$statusDecrease) on $today")
-=======
-        println("Retrieved from Redis: $itemId -> $stockStatus (+$statusIncrease, -$statusDecrease) on $today")
->>>>>>> origin/modules/manager
 
         return Triple(stockStatus, statusIncrease, statusDecrease)
     }
@@ -118,11 +96,7 @@ fun cacheInventoryInRedis(itemId: String, newStockStatus: String) {
         // 현재 날짜를 가져옴
         val today = LocalDate.now()
 
-<<<<<<< HEAD
 //        println("Saving to Redis: $itemId -> $newStockStatus (+$statusIncrease, -$statusDecrease) on $today") // 로깅 추가
-=======
-        println("Saving to Redis: $itemId -> $newStockStatus (+$statusIncrease, -$statusDecrease) on $today") // 로깅 추가
->>>>>>> origin/modules/manager
         jedis.set(itemId, newStockStatus)
         jedis.set("$itemId:increase:$today", statusIncrease.toString())
         jedis.set("$itemId:decrease:$today", statusDecrease.toString())

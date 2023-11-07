@@ -1,9 +1,6 @@
 package com.example.app_backend.manager.redis
 
-<<<<<<< HEAD
 import org.springframework.data.redis.core.RedisTemplate
-=======
->>>>>>> origin/modules/manager
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -11,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController
 data class InventoryData(val itemId: String, val stockStatus: String)
 
 @RestController
-<<<<<<< HEAD
 class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
 
     @PostMapping("/api/send-to-redis")
@@ -32,16 +28,3 @@ class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
         }
     }
 }
-=======
-class RedisController {
-    @PostMapping("/api/send-to-redis")
-    fun sendToRedis(@RequestBody data: InventoryData): String {
-        return try {
-            cacheInventoryInRedis(data.itemId, data.stockStatus)
-            "Data successfully sent to Redis"
-        } catch (e: Exception) {
-            "Failed to send data to Redis"
-        }
-    }
-}
->>>>>>> origin/modules/manager
