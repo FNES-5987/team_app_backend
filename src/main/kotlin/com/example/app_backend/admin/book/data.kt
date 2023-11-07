@@ -24,6 +24,13 @@ data class SimplifiedBookDTO(
         val categoryName: String,
         val customerReviewRank: Int
 )
+//data class BookDTO(
+//        val id: Int,
+//        val publisher: String,
+//        val title: String,
+//        val author: String,
+//        val categoryName: String
+//)
 
 data class TodayBookDTO(
         val cover: String,
@@ -35,4 +42,9 @@ data class TodayBookDTO(
         val readDate: String
         )
 
-
+data class BookColumnViewsByUserAttribute(
+        val bookColumnValue: String, // 사용자 속성 컬럼값
+        val userAttributeKey: String, // 도서 속성의 키 (예: "title", "author", "publisher", "categoryName" 등)
+        val userAttribute: String, // 도서 속성의 값
+        val totalViews: Long // 해당 속성을 가진 도서들의 총 조회수
+)

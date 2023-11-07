@@ -1,6 +1,8 @@
 package com.example.app_backend.admin.book
 
+import com.example.app_backend.admin.rabbit.BookDTO
 import com.example.app_backend.admin.rabbit.HitsRecords
+import com.example.app_backend.admin.user.UserColumnViewsByBookAttribute
 import com.example.app_backend.admin.user.Users
 import com.example.app_backend.api.SimplifiedBooks
 import com.example.app_backend.api.TodayBooks
@@ -334,7 +336,7 @@ class BookService(
     // 도서 DB 없을때 오류
     val errorItemIds = mutableSetOf<Int>()
     fun processBookView(itemId: Int) {
-        val book = findBookByItemId(itemId)
+        val book = findOrCreateBookByItemId(itemId)
         if (book == null) {
             errorItemIds.add(itemId)
             if (errorItemIds.size >= ERROR_THRESHOLD) {
@@ -342,15 +344,108 @@ class BookService(
                 errorItemIds.clear()
             }
         } else {
-            findBookByItemId(itemId)
+            findOrCreateBookByItemId(itemId)
+        }
+    }
+    fun findOrCreateBookByItemId(itemId: Int): BookDTO {
+        val existingBook = SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }.singleOrNull()
+
+        return if (existingBook != null) {
+            // 도서가 존재하는 경우 해당 도서의 DTO를 반환
+            BookDTO(
+                id = existingBook[SimplifiedBooks.id].value,
+                itemId =existingBook[SimplifiedBooks.itemId],
+                title = existingBook[SimplifiedBooks.title],
+                author = existingBook[SimplifiedBooks.author],
+                publisher = existingBook[SimplifiedBooks.publisher],
+                categoryName = existingBook[SimplifiedBooks.categoryName]
+            )
+        } else {
+            // 존재하지 않으면 ->1. DB 새로운 도서를 추가
+            println("신간 itemId: ${itemId}")
+            SimplifiedBooks.insertAndGetId {
+                it[createdDate] = formattedDate
+                it[this.itemId] = itemId
+                // 다른 필드들은 기본값 또는 null 처리
+                it[title] = "Unknown"
+                it[author] = "Unknown"
+                it[publisher] = "Unknown"
+                it[categoryName] = "Unknown"
+                it[createdDate] = formattedDate
+                it[link] = ""
+                it[pubDate] = ""
+                it[description] = ""
+                it[isbn] = ""
+                it[isbn13] = ""
+                it[priceSales] = 0
+                it[priceStandard] = 0
+                it[stockStatus] = ""
+                it[cover] = ""
+                it[categoryId] = 0
+                it[customerReviewRank] =0
+
+
+            }
+//            2. hits_record 추가
+            println("SimplifiedBooks 신간추가: ${itemId}")
+            findOrCreateBookByItemId(itemId);
         }
     }
 
-    fun findBookByItemId(itemId: Int): Int? {
-        return SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
-                .singleOrNull()
-                ?.get(SimplifiedBooks.id)?.value
+    //조회수
+    fun findViewsByBookColumnAndUserAttribute(
+        bookColumn: Column<String>,
+        userAttributeColumn: Column<String>
+    ): List<BookColumnViewsByUserAttribute> {
+        // 데이터베이스 트랜잭션을 시작합니다.
+        return transaction {
+            // HitsRecords 테이블과 Users, SimplifiedBooks 테이블을 조인합니다.
+            (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
+                // 관심 있는 컬럼을 선택합니다.
+                .slice(bookColumn, userAttributeColumn, HitsRecords.hitsCount.sum())
+                // 모든 레코드를 선택합니다.
+                .selectAll()
+                // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
+                .groupBy(bookColumn, userAttributeColumn)
+                // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
+                .map { resultRow ->
+                    BookColumnViewsByUserAttribute(
+                        bookColumnValue = resultRow[bookColumn],
+                        userAttributeKey = userAttributeColumn.name,
+                        userAttribute = resultRow[userAttributeColumn],
+                        totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
+                    )
+                }
+        }
     }
+    //사용자 별
+    //조회수
+    fun findViewsByUserColumnAndBookAttribute(
+        userColumn: Column<String>,
+        bookAttributeColumn: Column<String>
+    ): List<UserColumnViewsByBookAttribute> {
+        // 데이터베이스 트랜잭션을 시작합니다.
+        return transaction {
+            // HitsRecords 테이블과 Users, Books 테이블을 조인합니다.
+            (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
+                // 관심 있는 컬럼을 선택합니다.
+                .slice(userColumn, bookAttributeColumn, HitsRecords.hitsCount.sum())
+                // 모든 레코드를 선택합니다.
+                .selectAll()
+                // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
+                .groupBy(userColumn, bookAttributeColumn)
+                // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
+                .map { resultRow ->
+                    UserColumnViewsByBookAttribute(
+                        userColumnValue = resultRow[userColumn],
+                        bookAttributeKey = bookAttributeColumn.name,
+                        bookAttributeValue = resultRow[bookAttributeColumn],
+                        totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
+                    )
+                }
+        }
+    }
+
 
     // 에러 관리
     fun reportErrorToAdmin(errorItemIds: Set<Int>) {
@@ -388,14 +483,6 @@ class BookService(
         // 세 개의 테이블에 모두 해당하는 레코드만
         return (SimplifiedBooks innerJoin HitsRecords innerJoin Users)
                 .select { Users.birth eq birth }
-                .groupBy(SimplifiedBooks.itemId, SimplifiedBooks.publisher, SimplifiedBooks.title, SimplifiedBooks.author, SimplifiedBooks.categoryName)
-                .orderBy(HitsRecords.hitsCount to SortOrder.DESC)
-                .map { it }
-    }
-    fun getBooksByGender(gender: Int): List<ResultRow> {
-        // 세 개의 테이블에 모두 해당하는 레코드만
-        return (SimplifiedBooks innerJoin HitsRecords innerJoin Users)
-                .select { Users.gender eq gender }
                 .groupBy(SimplifiedBooks.itemId, SimplifiedBooks.publisher, SimplifiedBooks.title, SimplifiedBooks.author, SimplifiedBooks.categoryName)
                 .orderBy(HitsRecords.hitsCount to SortOrder.DESC)
                 .map { it }

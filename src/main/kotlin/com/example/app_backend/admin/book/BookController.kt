@@ -1,5 +1,7 @@
 package com.example.app_backend.admin.book
 
+import com.example.app_backend.admin.user.UserColumnViewsByBookAttribute
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ResultRow
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -99,12 +101,17 @@ class BookController(private val bookService: BookService) {
     }
 
     //통계
-    @GetMapping("/byBirth")
-    fun getBooksByBirth(@RequestParam birth: Int): List<ResultRow> {
-        return bookService.getBooksByBirth(birth)
+    @GetMapping("/views/book")
+    fun getHitsByBooks(@RequestParam bookColumn: Column<String>,
+                        @RequestParam userAttributeColumn: Column<String>
+    ): List<BookColumnViewsByUserAttribute> {
+        return bookService.findViewsByBookColumnAndUserAttribute(bookColumn,userAttributeColumn)
     }
-    @GetMapping("/byGender")
-    fun getBooksByGender(@RequestParam gender: Int): List<ResultRow> {
-        return bookService.getBooksByBirth(gender)
+    @GetMapping("/views/user")
+    fun getHitsByUsers(@RequestParam userColumn: Column<String>,
+                       @RequestParam bookAttributeColumn: Column<String>
+    ): List<UserColumnViewsByBookAttribute> {
+        return bookService.findViewsByUserColumnAndBookAttribute(userColumn,bookAttributeColumn)
     }
+
 }
