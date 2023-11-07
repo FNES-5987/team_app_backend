@@ -7,6 +7,6 @@ import org.springframework.stereotype.Service
 class OrderPublisher(private val rabbitTemplate: RabbitTemplate) {
 
     fun sendOrder(bookMessageRequest: BookMessageRequest) {
-        rabbitTemplate.convertAndSend("exchangeName", "routingKey", bookMessageRequest)
+        rabbitTemplate.convertAndSend("amq.rabbitmq.trace", "create-book", bookMessageRequest)
     }
 }
