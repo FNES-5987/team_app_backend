@@ -18,6 +18,11 @@ object HitsRecords : LongIdTable("hits_record") {
     val hitsCount = long("hits_count").default(1)
     val createdDate = datetime("created_date")
 }
+//"hits_detail"
+object HitDetails : LongIdTable() {
+    val hitRecord = reference("hit_record_id", HitsRecords).index()
+    val timestamp = datetime("timestamp")
+}
 
 
 object  HourlyHitsRecords:LongIdTable("hourly_hits") {
@@ -60,6 +65,16 @@ class MessageTableSetup(private val database: Database) {
     fun migrateSchema() {
         transaction(database) {
             SchemaUtils.createMissingTablesAndColumns(Message)
+        }
+    }
+
+}
+@Configuration
+class HitsDetailTableSetup(private val database: Database) {
+    @PostConstruct
+    fun migrateSchema() {
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(HitDetails)
         }
     }
 

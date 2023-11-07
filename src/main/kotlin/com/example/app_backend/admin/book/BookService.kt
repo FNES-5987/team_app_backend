@@ -1,6 +1,8 @@
 package com.example.app_backend.admin.book
 
+import com.example.app_backend.admin.alarm.AlarmService
 import com.example.app_backend.admin.rabbit.BookDTO
+import com.example.app_backend.admin.rabbit.HitDetails
 import com.example.app_backend.admin.rabbit.HitsRecords
 import com.example.app_backend.admin.user.UserColumnViewsByBookAttribute
 import com.example.app_backend.admin.user.Users
@@ -22,11 +24,14 @@ import java.time.format.DateTimeFormatter
 class BookService(
         // 중간 저장소
         // String 타입의 키와 값으로 데이터를 저장하거나 조회
-        private val redisTemplate: RedisTemplate<String, String>
+    private val redisTemplate: RedisTemplate<String, String>,
+    private  val alarmService: AlarmService,
 
-) {
+
+    ) {
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
+//    마지막 데이터가 최근 추가된 데이터니까
     fun checkLast(cacheData: Any?) {
         when (cacheData) {
             // 매개변수가 string일때
@@ -250,8 +255,31 @@ class BookService(
         println("deleteBooks 요청 들어옴")
         println("삭제 요청 리스트 데이터:${itemIds}")
         // DB에서 책을 삭제
-        transaction {
-            SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
+        fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
+            println("deleteBooks 요청 들어옴")
+            println("삭제 요청 리스트 데이터: $itemIds")
+            // DB에서 책과 관련된 hitdetails와 hits_record를 먼저 삭제
+            transaction {
+                // 먼저 삭제해야 할 book_id를 찾음
+                val bookIdsToDelete = SimplifiedBooks.slice(SimplifiedBooks.id)
+                    .select { SimplifiedBooks.itemId inList itemIds }
+                    .map { it[SimplifiedBooks.id].value }
+
+                // hits_record와 연관된 hitdetails 행들을 찾아 삭제
+                val hitRecordIdsToDelete = HitsRecords.slice(HitsRecords.id)
+                    .select { HitsRecords.book inList bookIdsToDelete }
+                    .map { it[HitsRecords.id].value }
+
+                HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
+
+                // 이제 hits_record 테이블에서 참조하는 행들을 삭제
+                HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
+
+                // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
+                SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
+            }
+            // 삭제된 캐시 업데이트
+            return updateCache(deletedItemIds = itemIds)
         }
 //        println("deleteBooks 응답:${updateCache(deletedItemIds = itemIds)} ")
         // 삭제된 캐시 업데이트
@@ -333,20 +361,6 @@ class BookService(
     }
 
     //통계조회
-    // 도서 DB 없을때 오류
-    val errorItemIds = mutableSetOf<Int>()
-    fun processBookView(itemId: Int) {
-        val book = findOrCreateBookByItemId(itemId)
-        if (book == null) {
-            errorItemIds.add(itemId)
-            if (errorItemIds.size >= ERROR_THRESHOLD) {
-                reportErrorToAdmin(errorItemIds)
-                errorItemIds.clear()
-            }
-        } else {
-            findOrCreateBookByItemId(itemId)
-        }
-    }
     fun findOrCreateBookByItemId(itemId: Int): BookDTO {
         val existingBook = SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }.singleOrNull()
 
@@ -363,7 +377,7 @@ class BookService(
         } else {
             // 존재하지 않으면 ->1. DB 새로운 도서를 추가
             println("신간 itemId: ${itemId}")
-            SimplifiedBooks.insertAndGetId {
+            val newBookId = SimplifiedBooks.insertAndGetId {
                 it[createdDate] = formattedDate
                 it[this.itemId] = itemId
                 // 다른 필드들은 기본값 또는 null 처리
@@ -384,12 +398,19 @@ class BookService(
                 it[categoryId] = 0
                 it[customerReviewRank] =0
 
-
-            }
-//            2. hits_record 추가
+            }.value
+            // 새로 추가된 도서의 DTO 생성
+            val newBookDTO = BookDTO(
+                id = newBookId,
+                itemId = itemId,
+                title = "Unknown", // 예시, 실제로는 적절한 값으로 채울 것
+                author = "Unknown",
+                publisher = "Unknown",
+                categoryName = "Unknown"
+            )
+            alarmService.sendNotification(itemId)
             println("SimplifiedBooks 신간추가: ${itemId}")
-            findOrCreateBookByItemId(itemId);
-        }
+            return newBookDTO        }
     }
 
     //조회수
@@ -446,37 +467,6 @@ class BookService(
         }
     }
 
-
-    // 에러 관리
-    fun reportErrorToAdmin(errorItemIds: Set<Int>) {
-        // 이메일로 에러 리포트 보내기
-        sendErrorReportEmail(errorItemIds)
-
-        // 로그 파일에 에러 리포트 기록하기
-        logErrorReportToFile(errorItemIds)
-
-        // 알림 시스템에 에러 리포트 보내기
-        sendErrorReportNotification(errorItemIds)
-    }
-
-    fun sendErrorReportEmail(errorItemIds: Set<Int>) {
-        // 이메일로 에러 리포트 보내는 로직 구현
-        println("Sending email: Error ItemIds - $errorItemIds")
-    }
-
-    fun logErrorReportToFile(errorItemIds: Set<Int>) {
-        // 로그 파일에 에러 리포트 기록하는 로직 구현
-        println("Logging to file: Error ItemIds - $errorItemIds")
-    }
-
-    fun sendErrorReportNotification(errorItemIds: Set<Int>) {
-        // 알림 시스템에 에러 리포트 보내는 로직 구현
-        println("Sending notification: Error ItemIds - $errorItemIds")
-    }
-
-    companion object {
-        const val ERROR_THRESHOLD = 10
-    }
 
     // User Select
     fun getBooksByBirth(birth: Int): List<ResultRow> {

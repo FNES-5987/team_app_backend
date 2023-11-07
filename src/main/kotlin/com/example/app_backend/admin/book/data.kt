@@ -29,7 +29,7 @@ data class SimplifiedBookDTO(
 //        val publisher: String,
 //        val title: String,
 //        val author: String,
-//        val categoryName: String
+//        val categoryName: String)
 //)
 
 data class TodayBookDTO(

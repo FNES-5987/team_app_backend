@@ -65,15 +65,13 @@ class MessageService(
 
             // SimplifiedBooks 테이블에 데이터 추가
             val book = bookService.findOrCreateBookByItemId(itemId = message.itemId)
-
-
-//            val bookId = bookIdAny as Int
             println("rabbit 도서: ${book} ")
-            // ViewRecords 테이블에 데이터 추가
+
 
 
             addOrUpdateHitsRecord(user, book, message.hitsCount, createDateForDb)
-
+            val hitRecordId = addOrUpdateHitsRecord(user, book, 1, createDateForDb)
+            addHitDetail(hitRecordId, createDateForDb)
 //            println("조회수 증가: $viewRecord")
             // ViewRecords 테이블에 데이터 추가
 
@@ -81,21 +79,21 @@ class MessageService(
     }
 
     // 데이터 삽입 함수
-    fun addOrUpdateHitsRecord(user: UserDTO, book: BookDTO, newHitsCount: Long, createDateForDb: LocalDateTime) {
+    fun addOrUpdateHitsRecord(user: UserDTO, book: BookDTO, newHitsCount: Long, createDateForDb: LocalDateTime): Long {
 
         // user ID와 book ID로 기존 조회수 레코드를 찾습니다.
         val existingRecord = HitsRecords.select {
             (HitsRecords.user eq user.id) and (HitsRecords.book eq book.id)
         }.singleOrNull()
 
-        if (existingRecord == null) {
+        return if (existingRecord == null) {
             // 레코드가 없으면 새로운 레코드를 추가합니다.
-            HitsRecords.insert {
+            HitsRecords.insertAndGetId {
                 it[HitsRecords.user] = user.id // Users 테이블과 연결된 외래 키 필드
                 it[HitsRecords.book] = book.id // SimplifiedBooks 테이블과 연결된 외래 키 필드
                 it[hitsCount] = newHitsCount
                 it[createdDate] = createDateForDb // 문자열이나 날짜 형식에 따라 적절히 변환해야 함
-            }
+            }.value
         } else {
             // 레코드가 있으면 조회수를 갱신합니다.
             HitsRecords.update({ (HitsRecords.id eq existingRecord[HitsRecords.id]) }) {
@@ -103,6 +101,16 @@ class MessageService(
                     it.update(hitsCount, hitsCount + newHitsCount)
                 }
             }
+            existingRecord[HitsRecords.id].value
+        }
+
+    }
+
+    // 조회수 시간 기록
+    fun addHitDetail(hitRecordId: Long, timestamp: LocalDateTime) {
+        HitDetails.insert {
+            it[hitRecord] = hitRecordId
+            it[this.timestamp] = timestamp
         }
     }
 
