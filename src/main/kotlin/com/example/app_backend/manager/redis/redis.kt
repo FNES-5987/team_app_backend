@@ -61,7 +61,7 @@ fun cacheInventoryInRedis() {
 }
 
 fun getStockStatusFromRedis(itemId: String): Triple<String?, String?, String?> {
-    Jedis("localhost", 6379).use { jedis ->
+    Jedis("192.168.100.177", 6379).use { jedis ->
         // 현재 날짜를 가져옴
         val today = LocalDate.now()
 

@@ -11,9 +11,9 @@ class StatisticsController(private val redisService: RedisService) {
 
     @GetMapping("/redis-data")
     fun getRedisData(
-            @RequestParam("date")
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-            date: LocalDate
+        @RequestParam("date")
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        date: LocalDate
     ): List<RedisData> {
         return redisService.getDataByDate(date)
     }
