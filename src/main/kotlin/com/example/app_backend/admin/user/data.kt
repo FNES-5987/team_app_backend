@@ -9,6 +9,8 @@ data class UserDTO(
     val birth: Int?,
     val gender :Int?,
     val bookmark: String?,
+    val ageGroup: Int?,
+    val genderGroup: String?,
 )
 data class UserColumnViewsByBookAttribute(
     val userColumnValue: String, // 사용자 속성 컬럼값

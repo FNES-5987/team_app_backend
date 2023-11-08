@@ -78,7 +78,7 @@ class MessageService(
         }
     }
 
-    // 데이터 삽입 함수
+    // 중간테이블
     fun addOrUpdateHitsRecord(user: UserDTO, book: BookDTO, newHitsCount: Long, createDateForDb: LocalDateTime): Long {
 
         // user ID와 book ID로 기존 조회수 레코드를 찾습니다.
@@ -113,6 +113,7 @@ class MessageService(
             it[this.timestamp] = timestamp
         }
     }
+
 
     // 시간대별 조회수 데이터를 가져오는 함수
     fun getHourlyHitsStatistics(startDate: LocalDateTime, endDate: LocalDateTime): Map<LocalDateTime, Long> {

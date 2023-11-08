@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter
 
 @RestController
 @RequestMapping("/hits")
-class Hitscontroller(private val messageService: MessageService) {
+class HitsController(private val messageService: MessageService) {
     @GetMapping("/hourly")
     fun getHourlyHits(
         @RequestParam("start") start: String,
@@ -35,4 +35,9 @@ class Hitscontroller(private val messageService: MessageService) {
         val averages = messageService.getWeeklyAverageHits()
         return ResponseEntity.ok(averages)
     }
+//    @GetMapping("/age")
+//    fun getHitsByAge(): ResponseEntity<Map<Int, Double>> {
+//        val averages = hitService.getHitsByAge()
+//        return ResponseEntity.ok(averages)
+//    }
 }
