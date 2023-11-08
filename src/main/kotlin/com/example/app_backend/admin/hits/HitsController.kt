@@ -1,43 +1,27 @@
 package com.example.app_backend.admin.hits
 
-import com.example.app_backend.admin.rabbit.MessageService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.LocalDateTime
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
+
 
 @RestController
 @RequestMapping("/hits")
-class HitsController(private val messageService: MessageService) {
-    @GetMapping("/hourly")
-    fun getHourlyHits(
-        @RequestParam("start") start: String,
-        @RequestParam("end") end: String
-    ): ResponseEntity<Map<LocalDateTime, Long>> {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val startDate = LocalDateTime.parse(start, formatter)
-        val endDate = LocalDateTime.parse(end, formatter)
-        val hits = messageService.getHourlyHitsStatistics(startDate, endDate)
-        return ResponseEntity.ok(hits)
-    }
-    @GetMapping("/monthly-average")
-    fun getMonthlyAverageHits(): ResponseEntity<Map<YearMonth, Double>> {
-        val averages = messageService.getMonthlyAverageHits()
-        return ResponseEntity.ok(averages)
-    }
+class HitsController(private val hitsService: HitsService) {
+    // 서비스 레이어의 빈을 주입합니다. (서비스 레이어에서 실제 데이터 처리를 구현합니다.)
 
-    @GetMapping("/weekly-average")
-    fun getWeeklyAverageHits(): ResponseEntity<Map<Int, Double>> {
-        val averages = messageService.getWeeklyAverageHits()
-        return ResponseEntity.ok(averages)
+    // 특정 날짜에 대한 시간별 조회수 데이터를 제공하는 엔드포인트
+    @GetMapping("/daily")
+    fun getDailyStats(
+        @RequestParam date: String
+    ): ResponseEntity<Map<String, Long>>? {
+        println("date: ${date}")
+        // 서비스 레이어를 통해 해당 날짜의 시간별 조회수 데이터를 가져옵니다.
+        val stats: Map<String, Long> = hitsService.getDailyHits(date)
+        println("stats: ${stats}")
+        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
+        return ResponseEntity.ok(stats)
     }
-//    @GetMapping("/age")
-//    fun getHitsByAge(): ResponseEntity<Map<Int, Double>> {
-//        val averages = hitService.getHitsByAge()
-//        return ResponseEntity.ok(averages)
-//    }
 }

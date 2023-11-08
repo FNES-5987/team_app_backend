@@ -2,7 +2,6 @@ package com.example.app_backend.admin.book
 
 import com.example.app_backend.admin.user.UserColumnViewsByBookAttribute
 import org.jetbrains.exposed.sql.Column
-import org.jetbrains.exposed.sql.ResultRow
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
