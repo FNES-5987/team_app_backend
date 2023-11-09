@@ -2,11 +2,11 @@ package com.example.app_backend.admin.hits
 
 import com.example.app_backend.admin.rabbit.HitDetails
 import com.example.app_backend.admin.rabbit.HitsRecords
-import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.andWhere
+import com.example.app_backend.admin.user.Users
+import com.example.app_backend.api.SimplifiedBooks
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.javatime.hour
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -22,28 +22,22 @@ class HitsService {
             println("일자별 조회수 요청 들어옴")
             // 날짜 형식을 yyyy-MM-dd로 파싱
         val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
-
-        val stats = mutableMapOf<String, Long>()
-
+        // 모든 시간대에 대해 조회수를 0으로 초기화합니다.
+        val stats = (0..23).associate { "${it.toString().padStart(2, '0')}:00" to 0L }.toMutableMap()
         transaction {
-            // HitDetails의 timestamp가 해당 날짜에 속하는 레코드만 선택
+            // 조회할 날짜의 시작과 끝을 정의합니다.
+            val startOfDay = parsedDate.atStartOfDay()
+            val endOfDay = parsedDate.plusDays(1).atStartOfDay()
+
+            // timestamp가 주어진 날짜 범위에 있는 레코드만 조회합니다.
             HitDetails
                 .select {
-                    HitDetails.timestamp greaterEq parsedDate.atStartOfDay()
-                }
-//                기존의 where 조건에 추가적인 조건
-                .andWhere {
-                    HitDetails.timestamp less parsedDate.plusDays(1).atStartOfDay()
+                    HitDetails.timestamp greaterEq startOfDay
                 }
                 .map { row ->
-                    // timestamp에서 시간 정보만 추출하여 Map에 저장
+                    // timestamp에서 시간을 추출하여 해당 시간대의 조회수를 1 증가시킵니다.
                     val hour = row[HitDetails.timestamp].hour.toString().padStart(2, '0') + ":00"
-                    hour to 1L // 여기서는 각 HitDetails 레코드를 1회 조회로 간주합니다.
-                }
-                .groupBy { it.first }
-                .mapValues { (_, values) -> values.sumOf { it.second } }
-                .also { results ->
-                    stats.putAll(results)
+                    stats[hour] = stats.getOrDefault(hour, 0) + 1
                 }
         }
             println("${date}의 조회수 : ${stats}")
@@ -51,6 +45,88 @@ class HitsService {
 
     }
 
+    fun getDailyHitsWithMaxInfo(date: String): Map<String, Map<String, Any?>> {
+        println("일자별 최다 User/Books 조회수 요청 들어옴")
+        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
+        val startOfDay = parsedDate.atStartOfDay()
+        val endOfDay = parsedDate.plusDays(1).atStartOfDay()
+
+        val stats = mutableMapOf<String, Map<String, Any?>>()
+
+        transaction {
+            // 1. 시간대별로 조회수를 집계합니다.
+            val timeBasedHits = HitDetails
+                .innerJoin(HitsRecords)
+                .slice(HitDetails.timestamp.hour(), HitsRecords.hitsCount.sum())
+                .select { HitDetails.timestamp.between(startOfDay, endOfDay) }
+                .groupBy(HitDetails.timestamp.hour())
+                .associateBy({
+                    // 시간을 키로 사용합니다.
+                    it[HitDetails.timestamp.hour()].toString().padStart(2, '0') + ":00"
+                }, {
+                    // 조회수 합계를 값으로 사용합니다. null이면 0을 반환합니다.
+                    it[HitsRecords.hitsCount.sum()] ?: 0L
+                })
+
+            // 2. 시간대별로 최대 조회수를 가진 레코드의 도서와 사용자 정보를 조회합니다.
+            timeBasedHits.forEach { (hour, _) ->
+                // 가장 많은 조회수를 가진 도서와 사용자의 ID를 찾습니다.
+                val maxInfo = HitsRecords
+                    .slice(HitsRecords.book, HitsRecords.user, HitsRecords.hitsCount.max())
+                    .select {
+                        HitsRecords.createdDate. between(startOfDay, endOfDay)
+                    }
+                    .groupBy(HitsRecords.book, HitsRecords.user)
+                    .orderBy(HitsRecords.hitsCount.max(), SortOrder.DESC)
+                    .limit(1)
+                    .firstOrNull()
+
+                maxInfo?.let {
+                    val bookId = it[HitsRecords.book]
+                    val userId = it[HitsRecords.user]
+                    val hitsCount = it[HitsRecords.hitsCount.max()] ?: 0
+
+                    val bookInfo = SimplifiedBooks.select { SimplifiedBooks.id eq bookId }.firstOrNull()
+                    val userInfo = Users.select { Users.id eq userId }.firstOrNull()
+
+                    // 3. 조회된 정보를 stats 맵에 추가합니다.
+                    stats[hour] = mapOf(
+                        "title" to bookInfo?.get(SimplifiedBooks.title),
+                        "categoryName" to bookInfo?.get(SimplifiedBooks.categoryName),
+                        "ageGroup" to userInfo?.get(Users.ageGroup),
+                        "genderGroup" to userInfo?.get(Users.genderGroup),
+                        "hitsCount" to hitsCount
+                    )
+                }
+            }
+
+            // 4. 전체 조회수에서 가장 많은 조회를 한 성별의 연령대를 찾습니다.
+            val genderAgeGroupMaxHits = Users
+                .innerJoin(HitsRecords)
+                .slice(Users.ageGroup, Users.genderGroup, HitsRecords.hitsCount.sum())
+                .selectAll()
+                .withDistinct()
+                .groupBy(Users.ageGroup, Users.genderGroup)
+                .orderBy(HitsRecords.hitsCount.sum(), SortOrder.DESC)
+                .limit(1)
+                .firstOrNull()
+
+            genderAgeGroupMaxHits?.let { maxHitsRow ->
+                val maxAgeGroup = maxHitsRow[Users.ageGroup]
+                val maxGenderGroup = maxHitsRow[Users.genderGroup]
+                val maxHits = maxHitsRow[HitsRecords.hitsCount.sum()] ?: 0
+
+                // 이 정보를 stats에 추가합니다.
+                stats["maxGenderAgeGroupHits"] = mapOf(
+                    "ageGroup" to maxAgeGroup,
+                    "genderGroup" to maxGenderGroup,
+                    "hitsCount" to maxHits
+                )
+            }
+        }
+        println("일자별 최다 User/Books 조회수 결과: $stats")
+        return stats
+    }
 
 
     fun getHitsByAge(){
