@@ -25,6 +25,7 @@ object Inventories : Table("inventory") {
     val categoryName = varchar("categoryName", 255)
     val stockStatus = varchar("stockStatus", 20)
     val cover = varchar("cover", 512)
+    val isNew = bool("isNew").default(false)
     override val primaryKey = PrimaryKey(id, name = "pk_Inventory_id")
 }
 

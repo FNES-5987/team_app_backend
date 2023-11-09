@@ -26,9 +26,12 @@
                     val stockStatus = redisTemplate.opsForValue().get(itemId) ?: ""
                     val increase = redisTemplate.opsForValue().get("$itemId:increase:$date") ?: "0"
                     val decrease = redisTemplate.opsForValue().get("$itemId:decrease:$date") ?: "0"
-                    redisDataList.add(RedisData(itemId, stockStatus, increase, decrease))  // RedisData 객체 생성 시 이전 재고 상태를 포함시킵니다.
+                    val isbn = redisTemplate.opsForValue().get("$itemId:isbn") ?: "" // ISBN 정보 가져오기
+                    val date = LocalDate.parse(redisTemplate.opsForValue().get("$itemId:date")) // date 정보 가져오기
+                    redisDataList.add(RedisData(itemId, stockStatus, increase, decrease, isbn, date))  // RedisData 객체 생성 시 isbn, date 정보 포함
                 }
             }
+
 
             return redisDataList
         }

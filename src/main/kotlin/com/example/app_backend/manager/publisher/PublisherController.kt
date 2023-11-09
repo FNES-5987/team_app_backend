@@ -1,38 +1,74 @@
-// PublisherController.kt
-
 package com.example.app_backend.manager.publisher
 
-import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.jdbc.core.RowMapper
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import com.example.app_backend.manager.inventory.Inventories
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.core.io.ResourceLoader
+import org.springframework.web.bind.annotation.*
+import java.sql.Connection
+
+data class PublisherInfo(
+    val publisher: String,
+    val bookCount: Long
+)
 
 @RestController
-@RequestMapping("/api/publishers")
-class PublisherController(private val jdbcTemplate: JdbcTemplate) {
-
+@RequestMapping("/publishers")
+class PublisherController(
+    private val resourceLoader: ResourceLoader
+) {
     @GetMapping
-    fun getPublishers(): List<Publisher> {
-        val sql = "SELECT publisher, COUNT(*) as count FROM book GROUP BY publisher"
+    fun getPublishers(): List<PublisherInfo> = transaction(Connection.TRANSACTION_READ_UNCOMMITTED, readOnly = true) {
+        val query = Inventories.slice(Inventories.publisher, Inventories.id.count())
+            .selectAll()
+            .groupBy(Inventories.publisher)
 
-        return jdbcTemplate.query(sql, RowMapper { resultSet, _ ->
-            Publisher(resultSet.getString("publisher"), resultSet.getInt("count"))
-        })
+        // 조회
+        val content = query
+            .orderBy(Inventories.publisher to SortOrder.DESC)
+            .map { r ->
+                PublisherInfo(
+                    r[Inventories.publisher],
+                    r[Inventories.id.count()]
+                )
+            }
+
+        content
     }
 
-    @GetMapping("/{publisherName}")
-    fun getBooksByPublisher(@PathVariable publisherName: String): List<Book> {
-        val sql = "SELECT itemId, title, ISBN, stockStatus FROM inventory WHERE publisher = ?"
+    @GetMapping("/search")
+    fun searchPaging(
+        @RequestParam publisher: String?,
+    ): List<BookInfo> = transaction(Connection.TRANSACTION_READ_UNCOMMITTED, readOnly = true) {
+        val query = Inventories.selectAll()
 
-        return jdbcTemplate.query(sql, arrayOf(publisherName)) { resultSet, _ ->
-            Book(
-                    resultSet.getString("itemId"),
-                    resultSet.getString("title"),
-                    resultSet.getString("ISBN"),
-                    resultSet.getString("stockStatus"),
-            )
+        if (publisher != null) {
+            query.andWhere { Inventories.publisher eq publisher }
         }
+
+        // 조회
+        val content = query
+            .orderBy(Inventories.id to SortOrder.ASC)
+            .map { r ->
+                BookInfo(
+                    r[Inventories.id],
+                    r[Inventories.publisher],
+                    r[Inventories.title],
+                    r[Inventories.link],
+                    r[Inventories.author],
+                    r[Inventories.pubDate],
+                    r[Inventories.isbn],
+                    r[Inventories.isbn13],
+                    r[Inventories.itemId],
+                    r[Inventories.categoryId],
+                    r[Inventories.priceSales],
+                    r[Inventories.priceStandard],
+                    r[Inventories.stockStatus],
+                    r[Inventories.cover]
+                )
+            }
+
+        content
     }
+
 }

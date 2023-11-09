@@ -1,8 +1,6 @@
 package com.example.app_backend.manager.rabbitMQ.pub
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-
-@JsonIgnoreProperties(ignoreUnknown = true)
+//PublisherData.kt
 data class BookMessageRequest (
         val id: Long,
         val publisher : String,

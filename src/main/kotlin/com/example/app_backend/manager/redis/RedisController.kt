@@ -4,8 +4,9 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
-data class InventoryData(val itemId: String, val stockStatus: String)
+data class InventoryData(val itemId: String, val stockStatus: String, val isbn: String, val date: LocalDate?)
 
 @RestController
 class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
@@ -21,7 +22,7 @@ class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
 
         // Redis에 데이터가 없다면 저장
         try {
-            cacheInventoryInRedis(data.itemId, data.stockStatus)
+            cacheInventoryInRedis(data.itemId, data.stockStatus, data.isbn, data.date)
             return "Data successfully sent to Redis"
         } catch (e: Exception) {
             return "Failed to send data to Redis"

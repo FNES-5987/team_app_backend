@@ -1,6 +1,6 @@
 package com.example.app_backend.manager.inventory
 
-// data.kt
+// StoreData.kt
 
 data class InventoryResponse(
     val id : Long,

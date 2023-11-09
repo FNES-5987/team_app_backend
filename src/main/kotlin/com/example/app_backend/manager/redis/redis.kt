@@ -74,7 +74,7 @@ fun getStockStatusFromRedis(itemId: String): Triple<String?, String?, String?> {
         return Triple(stockStatus, statusIncrease, statusDecrease)
     }
 }
-fun cacheInventoryInRedis(itemId: String, newStockStatus: String) {
+fun cacheInventoryInRedis(itemId: String, newStockStatus: String, isbn: String, date: LocalDate?) {
     // Redis 연결 설정
     val jedis = Jedis("localhost", 6379)
 
@@ -94,16 +94,18 @@ fun cacheInventoryInRedis(itemId: String, newStockStatus: String) {
         val statusDecrease = if (statusChange < 0) -statusChange else 0
 
         // 현재 날짜를 가져옴
-        val today = LocalDate.now()
+        val today = date ?: LocalDate.now()
 
 //        println("Saving to Redis: $itemId -> $newStockStatus (+$statusIncrease, -$statusDecrease) on $today") // 로깅 추가
         jedis.set(itemId, newStockStatus)
         jedis.set("$itemId:increase:$today", statusIncrease.toString())
         jedis.set("$itemId:decrease:$today", statusDecrease.toString())
+        jedis.set("$itemId:isbn", isbn) // ISBN 저장
+        jedis.set("$itemId:date", today.toString()) // date 저장
 
         // 데이터베이스에 재고 상태 저장
         val statement = connection.prepareStatement(
-                "INSERT INTO inventory_history (itemId, date, stockStatus, increase, decrease) VALUES (?, ?, ?, ?, ?)"
+            "INSERT INTO inventory_history (itemId, date, stockStatus, increase, decrease) VALUES (?, ?, ?, ?, ?)"
         )
         statement.setString(1, itemId)
         statement.setDate(2, java.sql.Date.valueOf(today))

@@ -1,8 +1,5 @@
 package com.example.app_backend.manager.rabbitMQ.store
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-
-@JsonIgnoreProperties(ignoreUnknown = true)
 data class OrderSales(
     var id: Long,
     val name: String,
