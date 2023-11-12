@@ -8,7 +8,12 @@ import java.util.*
 @Service
 class UserService {
     fun findOrCreateUser(nickname: String?, birth: Int?, gender: Int?, bookmark: String?): UserDTO {
-        val existingUser = Users.select { Users.nickname eq nickname }.singleOrNull()
+        val existingUser = if (nickname == null || nickname == "unknown") {
+            Users.select { Users.nickname eq "unknown" }.singleOrNull()
+        } else {
+            Users.select { Users.nickname eq nickname }.singleOrNull()
+        }
+
 
         if (existingUser != null) {
             // 기존 사용자가 존재하면
@@ -42,7 +47,7 @@ class UserService {
                 ageGroup = existingUser[Users.ageGroup],
                 genderGroup = existingUser[Users.genderGroup]
             )
-        } else {
+        } else{
             // 사용자가 존재하지 않으면 새로 생성
             return createUser(nickname, birth, gender, bookmark)
         }
