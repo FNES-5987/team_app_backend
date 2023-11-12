@@ -70,10 +70,10 @@ class HitsController(private val hitsService: HitsService) {
     fun getTimeHitsByAgeGroup(
         @RequestParam date: String,
         @RequestParam ageGroup: Int
-    ): ResponseEntity<Map<String, Long>> {
+    ): ResponseEntity<Map<String, Any>> {
         println("date: $date, ageGroup: $ageGroup")
         // 서비스 레이어를 통해 해당 날짜와 ageGroup의 시간별 조회수 데이터를 가져옵니다.
-        val stats: Map<String, Long> = hitsService.getDailyHitsByAgeGroup(date, ageGroup)
+        val stats: Map<String, Any> = hitsService.getDailyHitsByAgeGroup(date, ageGroup)
         println("stats: $stats")
         // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
         return ResponseEntity.ok(stats)

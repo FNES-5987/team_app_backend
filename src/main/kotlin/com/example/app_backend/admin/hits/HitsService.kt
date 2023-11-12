@@ -14,10 +14,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.util.*
 
 @Service
 class HitsService {
+
+
     // 시간대별 조회수 데이터를 가져오는 함수
     // 특정 날짜에 대한 시간대별 조회수 데이터를 조회하는 함수
         fun getDailyHits(date: String): Map<String, Long> {
@@ -187,12 +190,14 @@ fun getDailyHitsByUserGroup(date: String, group: String):
     return groupStats.plus("total" to totalStats)
 }
 // 사용자
-    fun getDailyHitsByAgeGroup(date: String, ageGroup: Int): Map<String, Long> {
+    fun getDailyHitsByAgeGroup(date: String, ageGroup: Int): Map<String, Any> {
         println("일자별, 연령대별 조회수 요청 들어옴")
         // 날짜 형식을 yyyy-MM-dd로 파싱
         val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
         // 모든 시간대에 대해 조회수를 0으로 초기화
-        val stats = (0..23).associate { it.toString().padStart(2, '0') + ":00" to 0L }.toMutableMap()
+//        val stats = (0..23).associate { it.toString().padStart(2, '0') + ":00" to 0L }.toMutableMap()
+    // 조회수를 저장할 맵 초기화
+    val stats = mutableMapOf<String, MutableMap<String, Long>>()
 
     // ageGroup 조건 별 조회
     val ageGroupCondition = if (ageGroup == 1) {
@@ -209,11 +214,14 @@ fun getDailyHitsByUserGroup(date: String, group: String):
             val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
             val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
 
+        //innerJoin: 교집합만
             // HitsRecords와 Users 테이블을 조인하여 ageGroup에 맞는 사용자들의 조회수를 가져옵니다.
             HitDetails
                 .innerJoin(HitsRecords)
+                // 중간 테이블 -> user 내부 조인
                 .innerJoin(Users, { HitsRecords.user }, { Users.id })
-                .slice(HitDetails.timestamp, HitsRecords.id)
+                // 명시적 선언 필요
+                .slice(HitDetails.timestamp, HitsRecords.id, Users.genderGroup)
                 .select {
                     (HitDetails.timestamp greaterEq startOfDay) and
                             (HitDetails.timestamp less endOfDay) and
@@ -221,8 +229,14 @@ fun getDailyHitsByUserGroup(date: String, group: String):
                 .forEach { row ->
                     // timestamp에서 시간을 추출하여 해당 시간대의 문자열을 만듭니다.
                     val hourString = row[HitDetails.timestamp].atZone(ZoneId.systemDefault()).hour.toString().padStart(2, '0') + ":00"
+                    //성별 분류 추가
+                    val genderGroup = row[Users.genderGroup] ?: "Unknown"
+                    // 연령대별, 성별 그룹별 조회수 계산
+                    val genderStats = stats.getOrPut(hourString) { mutableMapOf() }
+                    genderStats[genderGroup] = genderStats.getOrDefault(genderGroup, 0L) + 1
+
                     // stats 맵에서 해당 시간대 문자열의 조회수를 1 증가시킵니다.
-                    stats[hourString] = stats.getOrDefault(hourString, 0L) + 1
+//                    stats[hourString] = stats.getOrDefault(hourString, 0L) + 1
                 }
         }
         println("${date}, ageGroup ${ageGroup}의 조회수 : ${stats}")
