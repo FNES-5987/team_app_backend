@@ -1,6 +1,5 @@
 package com.example.app_backend
 
-import com.example.app_backend.manager.redis.cacheInventoryInRedis
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching
@@ -17,5 +16,4 @@ class TeamApplication
 
 fun main(args: Array<String>) {
     runApplication<TeamApplication>(*args)
-    cacheInventoryInRedis()
 }

@@ -20,16 +20,16 @@ class RabbitMQConfig {
     private val defaultHost: String = ""
 
     @Bean
-    fun queue1() = Queue("create-order") // 쇼핑몰 queue
+    fun queue1() = Queue("create-order")
 
     @Bean
-    fun queue2() = Queue("create-book") // 출판사 queue
+    fun queue2() = Queue("create-book")
 
     @Bean
     @Primary
     fun connectionFactory1(): ConnectionFactory {
         val connectionFactory = CachingConnectionFactory()
-        connectionFactory.setHost("192.168.100.177") // main ip
+        connectionFactory.setHost("192.168.100.177")
 //        http://192.168.100.204/
         connectionFactory.port = 5672
         connectionFactory.username = "rabbit"

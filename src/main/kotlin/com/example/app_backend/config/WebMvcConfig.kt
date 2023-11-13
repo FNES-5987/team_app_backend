@@ -16,7 +16,7 @@ class WebMvcConfig: WebMvcConfigurer {
                 "http://localhost:5500",
                     "192.168.100.204",
                     "192.168.100.177"
-            ) // 로컬 호스트 origin 허용
+            )
             .allowedMethods("*")
             .allowCredentials(true)
     }

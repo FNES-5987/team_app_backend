@@ -13,14 +13,11 @@ class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
 
     @PostMapping("/api/send-to-redis")
     fun sendToRedis(@RequestBody data: InventoryData): String {
-        // Redis에 이미 해당 아이템 ID에 대한 데이터가 있는지 확인
         val existingData = redisTemplate.opsForValue().get(data.itemId)
         if (existingData != null) {
-            // 이미 데이터가 있다면 요청을 무시하고 응답
             return "Data already exists in Redis"
         }
 
-        // Redis에 데이터가 없다면 저장
         try {
             cacheInventoryInRedis(data.itemId, data.stockStatus, data.isbn, data.date)
             return "Data successfully sent to Redis"

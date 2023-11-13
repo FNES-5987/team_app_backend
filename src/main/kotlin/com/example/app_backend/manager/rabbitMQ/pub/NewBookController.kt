@@ -4,9 +4,8 @@ package com.example.app_backend.manager.rabbitMQ.pub
 
 import org.springframework.jdbc.core.BeanPropertyRowMapper
 import org.springframework.jdbc.core.JdbcTemplate
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+
 
 @RestController
 @RequestMapping("/newBooks")
@@ -19,5 +18,10 @@ class NewBookController(
             "SELECT * FROM new_book",
             BeanPropertyRowMapper(BookMessageRequest::class.java)
         )
+    }
+
+    @PostMapping
+    fun addBook(@RequestBody newBook: BookMessageRequest?): BookMessageRequest? {
+        return newBook
     }
 }

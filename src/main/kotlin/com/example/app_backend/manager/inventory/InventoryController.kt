@@ -17,9 +17,6 @@ import java.sql.Connection
 @RestController
 @RequestMapping("/api/inventories")
 class InventoryController(private val resourceLoader: ResourceLoader) {
-//    private val POST_FILE_PATH = "files/inventory"
-
-    //    @Auth
     @GetMapping
     fun fetch() = transaction {
         Inventories.selectAll().map { r ->
@@ -100,10 +97,8 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
             query.andWhere { Inventories.itemId eq (itemId.toIntOrNull() ?: 0) }
         }
 
-        // 전체 결과 카운트
         val totalCount = query.count()
 
-        // 페이징 조회
         val content = query
             .orderBy(Inventories.id to SortOrder.DESC)
             .limit(size, offset = (size * page).toLong())
@@ -127,7 +122,6 @@ class InventoryController(private val resourceLoader: ResourceLoader) {
                 )
             }
 
-        // Page 객체로 리턴
         PageImpl(content, PageRequest.of(page, size), totalCount)
     }
 

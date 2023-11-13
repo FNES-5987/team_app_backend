@@ -56,5 +56,3 @@ data class InventoryModifyRequest(
     val stockStatus: String?,
     val cover : String?,
 )
-
-
