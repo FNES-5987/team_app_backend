@@ -12,7 +12,7 @@ object Users : IntIdTable("user") {
     val birth = integer("birth").nullable()
     val gender = integer("gender").nullable()
     val bookmark = varchar("bookmark", 255).nullable()
-    val ageGroup = integer("age_group").nullable()
+    val ageGroup = integer("age_group")
     val genderGroup =varchar("gender_group",16).nullable()
 }
 
