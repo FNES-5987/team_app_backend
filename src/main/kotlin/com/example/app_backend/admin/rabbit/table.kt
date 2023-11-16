@@ -70,6 +70,17 @@ class MessageTableSetup(private val database: Database) {
 
 }
 @Configuration
+class HitsRecordTableSetup(private val database: Database) {
+    @PostConstruct
+    fun migrateSchema() {
+        transaction(database) {
+            SchemaUtils.createMissingTablesAndColumns(HitsRecords)
+        }
+    }
+
+}
+
+@Configuration
 class HitsDetailTableSetup(private val database: Database) {
     @PostConstruct
     fun migrateSchema() {

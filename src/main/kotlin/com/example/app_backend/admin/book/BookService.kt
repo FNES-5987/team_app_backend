@@ -24,14 +24,15 @@ import java.time.format.DateTimeFormatter
 class BookService(
         // 중간 저장소
         // String 타입의 키와 값으로 데이터를 저장하거나 조회
-    private val redisTemplate: RedisTemplate<String, String>,
-    private  val alarmService: AlarmService,
+        private val redisTemplate: RedisTemplate<String, String>,
+        private val alarmService: AlarmService,
 
 
-    ) {
+        ) {
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
-//    마지막 데이터가 최근 추가된 데이터니까
+
+    //    마지막 데이터가 최근 추가된 데이터니까
     fun checkLast(cacheData: Any?) {
         when (cacheData) {
             // 매개변수가 string일때
@@ -64,7 +65,6 @@ class BookService(
         println("2.조회: redis cache 업데이트 확인")
         checkLast(cacheData)
 
-
         val booksFromDB = getBooks()
         return if (!cacheData.isNullOrEmpty()) {
             val booksFromCache = try {
@@ -75,7 +75,6 @@ class BookService(
                 println("Json parsing error: ${e.message}")
                 emptyList<SimplifiedBookDTO>()
             }
-
             // 캐시 데이터와 DB 데이터 일치 여부 확인
             if (booksFromCache == booksFromDB) {
                 println("Data from Redis")
@@ -122,7 +121,7 @@ class BookService(
             // 일치하는 것 제외하고 새로운 데이터로 set함.
             val updatedBooks = booksFromCache.filterNot { it.itemId in deletedItemIds }
             redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-//            println("Updated cache: ${redisTemplate.opsForValue().get("books")}")
+            println("삭제 됨.Updated cache: ${redisTemplate.opsForValue().get("books")}")
             return updatedBooks
         }
 
@@ -251,37 +250,31 @@ class BookService(
         }
     }
 
+
+    // DB에서 책을 삭제
     fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
         println("deleteBooks 요청 들어옴")
-        println("삭제 요청 리스트 데이터:${itemIds}")
-        // DB에서 책을 삭제
-        fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
-            println("deleteBooks 요청 들어옴")
-            println("삭제 요청 리스트 데이터: $itemIds")
-            // DB에서 책과 관련된 hitdetails와 hits_record를 먼저 삭제
-            transaction {
-                // 먼저 삭제해야 할 book_id를 찾음
-                val bookIdsToDelete = SimplifiedBooks.slice(SimplifiedBooks.id)
+        println("삭제 요청 리스트 데이터: $itemIds")
+        // DB에서 책과 관련된 hitdetails와 hits_record를 먼저 삭제
+        transaction {
+            // 먼저 삭제해야 할 book_id를 찾음
+            val bookIdsToDelete = SimplifiedBooks.slice(SimplifiedBooks.id)
                     .select { SimplifiedBooks.itemId inList itemIds }
                     .map { it[SimplifiedBooks.id].value }
 
-                // hits_record와 연관된 hitdetails 행들을 찾아 삭제
-                val hitRecordIdsToDelete = HitsRecords.slice(HitsRecords.id)
+            // hits_record와 연관된 hitdetails 행들을 찾아 삭제
+            val hitRecordIdsToDelete = HitsRecords.slice(HitsRecords.id)
                     .select { HitsRecords.book inList bookIdsToDelete }
                     .map { it[HitsRecords.id].value }
 
-                HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
+            HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
 
-                // 이제 hits_record 테이블에서 참조하는 행들을 삭제
-                HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
+            // 이제 hits_record 테이블에서 참조하는 행들을 삭제
+            HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
 
-                // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
-                SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
-            }
-            // 삭제된 캐시 업데이트
-            return updateCache(deletedItemIds = itemIds)
+            // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
+            SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
         }
-//        println("deleteBooks 응답:${updateCache(deletedItemIds = itemIds)} ")
         // 삭제된 캐시 업데이트
         return updateCache(deletedItemIds = itemIds)
     }
@@ -367,12 +360,12 @@ class BookService(
         return if (existingBook != null) {
             // 도서가 존재하는 경우 해당 도서의 DTO를 반환
             BookDTO(
-                id = existingBook[SimplifiedBooks.id].value,
-                itemId =existingBook[SimplifiedBooks.itemId],
-                title = existingBook[SimplifiedBooks.title],
-                author = existingBook[SimplifiedBooks.author],
-                publisher = existingBook[SimplifiedBooks.publisher],
-                categoryName = existingBook[SimplifiedBooks.categoryName]
+                    id = existingBook[SimplifiedBooks.id].value,
+                    itemId = existingBook[SimplifiedBooks.itemId],
+                    title = existingBook[SimplifiedBooks.title],
+                    author = existingBook[SimplifiedBooks.author],
+                    publisher = existingBook[SimplifiedBooks.publisher],
+                    categoryName = existingBook[SimplifiedBooks.categoryName]
             )
         } else {
             // 존재하지 않으면 ->1. DB 새로운 도서를 추가
@@ -396,74 +389,76 @@ class BookService(
                 it[stockStatus] = ""
                 it[cover] = ""
                 it[categoryId] = 0
-                it[customerReviewRank] =0
+                it[customerReviewRank] = 0
 
             }.value
             // 새로 추가된 도서의 DTO 생성
             val newBookDTO = BookDTO(
-                id = newBookId,
-                itemId = itemId,
-                title = "Unknown", // 예시, 실제로는 적절한 값으로 채울 것
-                author = "Unknown",
-                publisher = "Unknown",
-                categoryName = "Unknown"
+                    id = newBookId,
+                    itemId = itemId,
+                    title = "Unknown", // 예시, 실제로는 적절한 값으로 채울 것
+                    author = "Unknown",
+                    publisher = "Unknown",
+                    categoryName = "Unknown"
             )
             alarmService.sendNotification(itemId)
             println("SimplifiedBooks 신간추가: ${itemId}")
-            return newBookDTO        }
+            return newBookDTO
+        }
     }
 
     //조회수
     fun findViewsByBookColumnAndUserAttribute(
-        bookColumn: Column<String>,
-        userAttributeColumn: Column<String>
+            bookColumn: Column<String>,
+            userAttributeColumn: Column<String>
     ): List<BookColumnViewsByUserAttribute> {
         // 데이터베이스 트랜잭션을 시작합니다.
         return transaction {
             // HitsRecords 테이블과 Users, SimplifiedBooks 테이블을 조인합니다.
             (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
-                // 관심 있는 컬럼을 선택합니다.
-                .slice(bookColumn, userAttributeColumn, HitsRecords.hitsCount.sum())
-                // 모든 레코드를 선택합니다.
-                .selectAll()
-                // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
-                .groupBy(bookColumn, userAttributeColumn)
-                // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
-                .map { resultRow ->
-                    BookColumnViewsByUserAttribute(
-                        bookColumnValue = resultRow[bookColumn],
-                        userAttributeKey = userAttributeColumn.name,
-                        userAttribute = resultRow[userAttributeColumn],
-                        totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
-                    )
-                }
+                    // 관심 있는 컬럼을 선택합니다.
+                    .slice(bookColumn, userAttributeColumn, HitsRecords.hitsCount.sum())
+                    // 모든 레코드를 선택합니다.
+                    .selectAll()
+                    // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
+                    .groupBy(bookColumn, userAttributeColumn)
+                    // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
+                    .map { resultRow ->
+                        BookColumnViewsByUserAttribute(
+                                bookColumnValue = resultRow[bookColumn],
+                                userAttributeKey = userAttributeColumn.name,
+                                userAttribute = resultRow[userAttributeColumn],
+                                totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
+                        )
+                    }
         }
     }
+
     //사용자 별
     //조회수
     fun findViewsByUserColumnAndBookAttribute(
-        userColumn: Column<String>,
-        bookAttributeColumn: Column<String>
+            userColumn: Column<String>,
+            bookAttributeColumn: Column<String>
     ): List<UserColumnViewsByBookAttribute> {
         // 데이터베이스 트랜잭션을 시작합니다.
         return transaction {
             // HitsRecords 테이블과 Users, Books 테이블을 조인합니다.
             (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
-                // 관심 있는 컬럼을 선택합니다.
-                .slice(userColumn, bookAttributeColumn, HitsRecords.hitsCount.sum())
-                // 모든 레코드를 선택합니다.
-                .selectAll()
-                // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
-                .groupBy(userColumn, bookAttributeColumn)
-                // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
-                .map { resultRow ->
-                    UserColumnViewsByBookAttribute(
-                        userColumnValue = resultRow[userColumn],
-                        bookAttributeKey = bookAttributeColumn.name,
-                        bookAttributeValue = resultRow[bookAttributeColumn],
-                        totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
-                    )
-                }
+                    // 관심 있는 컬럼을 선택합니다.
+                    .slice(userColumn, bookAttributeColumn, HitsRecords.hitsCount.sum())
+                    // 모든 레코드를 선택합니다.
+                    .selectAll()
+                    // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
+                    .groupBy(userColumn, bookAttributeColumn)
+                    // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
+                    .map { resultRow ->
+                        UserColumnViewsByBookAttribute(
+                                userColumnValue = resultRow[userColumn],
+                                bookAttributeKey = bookAttributeColumn.name,
+                                bookAttributeValue = resultRow[bookAttributeColumn],
+                                totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
+                        )
+                    }
         }
     }
 

@@ -28,9 +28,6 @@ class ApiService(private val aladinClient: AladinClient) {
             val bestItem = aladinClient.getBest().item
             println(bestItem)
 
-            // 기존 데이터 삭제
-//                best.deleteAll()
-
             for (best in bestItem) {
 //                    val bestJson = mapper.writeValueAsString(best)
                 saveBest(best, formattedDate)
