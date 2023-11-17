@@ -7,7 +7,7 @@ import java.net.URL
 @Service
 class AlarmService {
     fun sendSlackMessage(webhookUrl: String, message: String) {
-        val url = URL("https://hooks.slack.com/services/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")
+        val url = URL("https://hooks.slack.com/services/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")
         val connection = url.openConnection() as HttpURLConnection
         try {
             connection.doOutput = true
@@ -32,7 +32,7 @@ class AlarmService {
     }
 
     fun sendNotification(itemId: Int): Int {
-        val webhookUrl = "https://hooks.slack.com/services/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"
+        val webhookUrl = "https://hooks.slack.com/services/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"
         val message = "Book with itemId $itemId is missing in the database."
         sendSlackMessage(webhookUrl, message)
         return itemId

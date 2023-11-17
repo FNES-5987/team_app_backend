@@ -121,7 +121,7 @@ class BookService(
             // 일치하는 것 제외하고 새로운 데이터로 set함.
             val updatedBooks = booksFromCache.filterNot { it.itemId in deletedItemIds }
             redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-            println("삭제 됨.Updated cache: ${redisTemplate.opsForValue().get("books")}")
+//            println("삭제 됨.Updated cache: ${redisTemplate.opsForValue().get("books")}")
             return updatedBooks
         }
 
@@ -287,6 +287,7 @@ class BookService(
                 if (updatedData.title != null) it[title] = updatedData.title
                 if (updatedData.link != null) it[link] = updatedData.link
                 if (updatedData.author != null) it[author] = updatedData.author
+//                if (updatedData.categoryName != null) it[categoryName] = updatedData.categoryName
                 if (updatedData.pubDate != null) it[pubDate] = updatedData.pubDate
                 if (updatedData.description != null) it[description] = updatedData.description
                 if (updatedData.isbn != null) it[isbn] = updatedData.isbn
@@ -379,15 +380,15 @@ class BookService(
                 it[publisher] = "Unknown"
                 it[categoryName] = "Unknown"
                 it[createdDate] = formattedDate
-                it[link] = ""
-                it[pubDate] = ""
-                it[description] = ""
-                it[isbn] = ""
-                it[isbn13] = ""
+                it[link] = "Unknown"
+                it[pubDate] = "Unknown"
+                it[description] = "Unknown"
+                it[isbn] = "Unknown"
+                it[isbn13] = "Unknown"
                 it[priceSales] = 0
                 it[priceStandard] = 0
-                it[stockStatus] = ""
-                it[cover] = ""
+                it[stockStatus] = "Unknown"
+                it[cover] = "Unknown"
                 it[categoryId] = 0
                 it[customerReviewRank] = 0
 

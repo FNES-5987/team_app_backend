@@ -6,9 +6,6 @@ import com.example.app_backend.admin.user.UserDTO
 import com.example.app_backend.admin.user.UserService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.javatime.hour
-import org.jetbrains.exposed.sql.javatime.month
-import org.jetbrains.exposed.sql.javatime.year
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
@@ -37,12 +34,10 @@ class MessageService(
         val createDate = LocalDateTime.parse(messageCreateDateString, formatter)
         println("Parsed createDate: $createDate")
         //서버가 UTC를 사용한다고 가정하고 KST로 명시적으로 변환
-        val zonedCreateDate = createDate.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul"))
 
-        println("Zoned createDate: $zonedCreateDate")
 
         // DB에 저장하기 위해 LocalDateTime으로 다시 변환.
-        val createDateForDb = zonedCreateDate.toLocalDateTime()
+        val createDateForDb = createDate
 
         println("createDate for DB: $createDateForDb")
         // 문자열 날짜를 LocalDateTime으로 변환하는 함수
