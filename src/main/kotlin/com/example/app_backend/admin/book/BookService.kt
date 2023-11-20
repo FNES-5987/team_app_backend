@@ -116,8 +116,6 @@ class BookService(
 
         if (deletedItemIds != null) {
             println("updateCache 삭제 요청 옴.")
-            // db 가져옴
-
             // 일치하는 것 제외하고 새로운 데이터로 set함.
             val updatedBooks = booksFromCache.filterNot { it.itemId in deletedItemIds }
             redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))

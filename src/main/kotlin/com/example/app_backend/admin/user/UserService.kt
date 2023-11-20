@@ -90,8 +90,10 @@ class UserService {
 
         // 현재 연도 계산
         val currentYear = Calendar.getInstance().get(Calendar.YEAR)
+//        println("현재연도:${currentYear}")
         // 나이 계산
         val age = currentYear - fullBirthYear
+//        println("age:${age}")
 
         // 성별 결정 (홀수: 남성, 짝수: 여성)
         val genderGroup = if (gender % 2 == 0) "Female" else "Male"

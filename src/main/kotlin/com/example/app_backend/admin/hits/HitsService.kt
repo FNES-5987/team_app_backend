@@ -33,10 +33,6 @@ class HitsService {
         // 모든 시간대에 대해 조회수를 0으로 초기화합니다.
         val stats = (0..23).associate { "${it.toString().padStart(2, '0')}:00" to 0L }.toMutableMap()
         transaction {
-            // 조회할 날짜의 시작과 끝을 정의합니다.
-//            val startOfDay = parsedDate.atStartOfDay()
-//            val endOfDay = parsedDate.plusDays(1).atStartOfDay()
-            // timestamp가 주어진 날짜 범위에 있는 레코드만 조회합니다.
             HitDetails
                 .select {
                     HitDetails.timestamp greaterEq startOfDay
@@ -53,9 +49,7 @@ class HitsService {
         }
         println("${date}의 조회수 : ${stats}")
         return stats
-
     }
-
     // 사용자 group별
     fun getDailyHitsByUserGroup(date: String, group: String):
             Map<String, MutableMap<String, Long>> {
@@ -66,20 +60,15 @@ class HitsService {
 //    val stats = (0..23).associate { it.toString().padStart(2, '0') + ":00" to 0L }.toMutableMap()
         val groupStats = mutableMapOf<String, MutableMap<String, Long>>()
         val totalStats = mutableMapOf<String, Long>()
-
         val groupColumn = when (group) {
-
             "genderGroup" -> Users.genderGroup
             "ageGroup" -> Users.ageGroup
             "bookmark" -> Users.bookmark
             else -> throw IllegalArgumentException("Invalid group value")
         }
-
         transaction {
-//
             val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
             val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
-
             HitDetails
                 .innerJoin(HitsRecords)
                 .innerJoin(Users, { HitsRecords.user }, { Users.id })
@@ -143,7 +132,6 @@ class HitsService {
                 println("$date 날짜와 $ageGroup 연령대에 대한 데이터가 없습니다.")
                 return@transaction emptyMap<String, Any>()
             }
-
             HitDetails
                 .innerJoin(HitsRecords)
                 .innerJoin(Users, { HitsRecords.user }, { Users.id })

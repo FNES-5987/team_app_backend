@@ -38,21 +38,25 @@ class BookController(private val bookService: BookService) {
         return try {
             val deletedBookIds = bookService.deleteBooks(itemIds)
             val response = mapOf(
-                    "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
-                    "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
+                "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
+                "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
             )
             ResponseEntity.ok(response)
         } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to (e.message
-                    ?: "Unknown error")))
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                mapOf(
+                    "error" to (e.message
+                        ?: "Unknown error")
+                )
+            )
         }
     }
 
     //수정
     @PutMapping("/{itemId}")
     fun updateBook(
-            @PathVariable itemId: Int,
-            @RequestBody updatedData: SimplifiedBookDTO
+        @PathVariable itemId: Int,
+        @RequestBody updatedData: SimplifiedBookDTO
     ): ResponseEntity<SimplifiedBookDTO> {
         return try {
             val updatedBook = bookService.modifyBook(itemId, updatedData)
@@ -65,18 +69,23 @@ class BookController(private val bookService: BookService) {
 
     // 오늘의 책
     @PostMapping("/today")
-    fun createTodayBook(@RequestParam("itemId") itemId: Int, @RequestParam("todayLetter") todayLetter: String, @RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {
+    fun createTodayBook(
+        @RequestParam("itemId") itemId: Int,
+        @RequestParam("todayLetter") todayLetter: String,
+        @RequestParam("readDate") readDate: String
+    )
+            : ResponseEntity<TodayBookDTO> {
         // DB에서 book 정보를 가져옵니다.
         val simplifiedBook = bookService.getBookByItemId(itemId)
         if (simplifiedBook != null) {
             val todayBook = TodayBookDTO(
-                    cover = simplifiedBook.cover,
-                    title = simplifiedBook.title,
-                    author = simplifiedBook.author,
-                    priceSales = simplifiedBook.priceSales,
-                    todayLetter = todayLetter,
-                    itemId = itemId,
-                    readDate = readDate
+                cover = simplifiedBook.cover,
+                title = simplifiedBook.title,
+                author = simplifiedBook.author,
+                priceSales = simplifiedBook.priceSales,
+                todayLetter = todayLetter,
+                itemId = itemId,
+                readDate = readDate
             )
             val savedTodayBook = bookService.addTodayBook(todayBook)
             println("추가된 오늘의 도서: ${savedTodayBook}")
@@ -101,16 +110,19 @@ class BookController(private val bookService: BookService) {
 
     //통계
     @GetMapping("/views/book")
-    fun getHitsByBooks(@RequestParam bookColumn: Column<String>,
-                        @RequestParam userAttributeColumn: Column<String>
+    fun getHitsByBooks(
+        @RequestParam bookColumn: Column<String>,
+        @RequestParam userAttributeColumn: Column<String>
     ): List<BookColumnViewsByUserAttribute> {
-        return bookService.findViewsByBookColumnAndUserAttribute(bookColumn,userAttributeColumn)
+        return bookService.findViewsByBookColumnAndUserAttribute(bookColumn, userAttributeColumn)
     }
+
     @GetMapping("/views/user")
-    fun getHitsByUsers(@RequestParam userColumn: Column<String>,
-                       @RequestParam bookAttributeColumn: Column<String>
+    fun getHitsByUsers(
+        @RequestParam userColumn: Column<String>,
+        @RequestParam bookAttributeColumn: Column<String>
     ): List<UserColumnViewsByBookAttribute> {
-        return bookService.findViewsByUserColumnAndBookAttribute(userColumn,bookAttributeColumn)
+        return bookService.findViewsByUserColumnAndBookAttribute(userColumn, bookAttributeColumn)
     }
 
 }
