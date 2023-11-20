@@ -52,7 +52,6 @@
                 while (resultSet.next()) {
                     val itemId = resultSet.getString("itemId")
                     val stockStatus = resultSet.getString("stockStatus")
-//            println("Saving to Redis: $itemId -> $stockStatus") // 로깅 추가
                     jedis.set(itemId, stockStatus)
 
                     val statement = connection.prepareStatement(

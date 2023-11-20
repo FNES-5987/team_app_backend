@@ -17,14 +17,4 @@ class StatisticsController(private val redisService: RedisService) {
     ): List<RedisData> {
         return redisService.getDataByDate(date)
     }
-
-    @DeleteMapping("/redis-data/all")
-    fun deleteAllData(): String {
-        return try {
-            redisService.flushAll()
-            "All data deleted successfully."
-        } catch (e: Exception) {
-            "Error deleting all data: ${e.message}"
-        }
-    }
 }

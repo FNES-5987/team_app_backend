@@ -57,6 +57,9 @@ dependencies {
     implementation ("org.springframework.boot:spring-boot-starter-data-redis")
 
     implementation ("com.rabbitmq:amqp-client:5.13.0")
+
+    implementation("io.springfox:springfox-boot-starter:3.0.0")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.0.2")
 }
 
 dependencyManagement {

@@ -1,17 +1,17 @@
 package com.example.app_backend
 
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cache.annotation.EnableCaching
 import org.springframework.cloud.openfeign.EnableFeignClients
 import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.web.servlet.config.annotation.EnableWebMvc
 
 @SpringBootApplication
 @EnableFeignClients
 @EnableScheduling
 @EnableCaching
-@EnableWebMvc
+@EnableAutoConfiguration
 class TeamApplication
 
 fun main(args: Array<String>) {
