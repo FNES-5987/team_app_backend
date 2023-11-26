@@ -395,7 +395,7 @@ class BookService(
             val newBookDTO = BookDTO(
                     id = newBookId,
                     itemId = itemId,
-                    title = "Unknown", // 예시, 실제로는 적절한 값으로 채울 것
+                    title = "Unknown",
                     author = "Unknown",
                     publisher = "Unknown",
                     categoryName = "Unknown"

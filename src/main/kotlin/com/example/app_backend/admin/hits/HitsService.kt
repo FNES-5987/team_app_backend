@@ -22,79 +22,79 @@ class HitsService {
 
     // 시간대별 조회수 데이터를 가져오는 함수
     // 특정 날짜에 대한 시간대별 조회수 데이터를 조회하는 함수
-    fun getDailyHits(date: String): Map<String, Long> {
-        println("일자별 조회수 요청 들어옴")
-        // 날짜 형식을 yyyy-MM-dd로 파싱
-        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
-        val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
-        val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
-        println("시작날짜:${startOfDay}")
-        println("시작날짜:${endOfDay}")
-        // 모든 시간대에 대해 조회수를 0으로 초기화합니다.
-        val stats = (0..23).associate { "${it.toString().padStart(2, '0')}:00" to 0L }.toMutableMap()
-        transaction {
-            HitDetails
-                .select {
-                    HitDetails.timestamp greaterEq startOfDay
-                }
-                .map { row ->
-                    // timestamp에서 시간을 추출하여 해당 시간대의 조회수를 1 증가시킵니다.
-                    val hour = row[HitDetails.timestamp].hour.toString().padStart(2, '0') + ":00"
-                    println("시작날짜:${startOfDay}")
-                    println("hour:${hour}")
-                    println("DB 저장 시간날짜:${HitDetails.timestamp}")
-
-                    stats[hour] = stats.getOrDefault(hour, 0) + 1
-                }
-        }
-        println("${date}의 조회수 : ${stats}")
-        return stats
-    }
+//    fun getDailyHits(date: String): Map<String, Long> {
+//        println("일자별 조회수 요청 들어옴")
+//        // 날짜 형식을 yyyy-MM-dd로 파싱
+//        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
+//        val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
+//        val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
+//        println("시작날짜:${startOfDay}")
+//        println("시작날짜:${endOfDay}")
+//        // 모든 시간대에 대해 조회수를 0으로 초기화합니다.
+//        val stats = (0..23).associate { "${it.toString().padStart(2, '0')}:00" to 0L }.toMutableMap()
+//        transaction {
+//            HitDetails
+//                .select {
+//                    HitDetails.timestamp greaterEq startOfDay
+//                }
+//                .map { row ->
+//                    // timestamp에서 시간을 추출하여 해당 시간대의 조회수를 1 증가시킵니다.
+//                    val hour = row[HitDetails.timestamp].hour.toString().padStart(2, '0') + ":00"
+//                    println("시작날짜:${startOfDay}")
+//                    println("hour:${hour}")
+//                    println("DB 저장 시간날짜:${HitDetails.timestamp}")
+//
+//                    stats[hour] = stats.getOrDefault(hour, 0) + 1
+//                }
+//        }
+//        println("${date}의 조회수 : ${stats}")
+//        return stats
+//    }
     // 사용자 group별
-    fun getDailyHitsByUserGroup(date: String, group: String):
-            Map<String, MutableMap<String, Long>> {
-        println("${date}에 해당하는, ${group}별 조회수 요청 들어옴")
-        // 날짜 형식을 yyyy-MM-dd로 파싱
-        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
-        // 모든 시간대에 대해 조회수를 0으로 초기화
-//    val stats = (0..23).associate { it.toString().padStart(2, '0') + ":00" to 0L }.toMutableMap()
-        val groupStats = mutableMapOf<String, MutableMap<String, Long>>()
-        val totalStats = mutableMapOf<String, Long>()
-        val groupColumn = when (group) {
-            "genderGroup" -> Users.genderGroup
-            "ageGroup" -> Users.ageGroup
-            "bookmark" -> Users.bookmark
-            else -> throw IllegalArgumentException("Invalid group value")
-        }
-        transaction {
-            val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
-            val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
-            HitDetails
-                .innerJoin(HitsRecords)
-                .innerJoin(Users, { HitsRecords.user }, { Users.id })
-                .slice(
-                    HitDetails.timestamp.hour(),
-                    groupColumn,
-                    HitDetails.id.count()
-                )
-                .select {
-                    (HitDetails.timestamp greaterEq startOfDay) and
-                            (HitDetails.timestamp less endOfDay)
-                }
-                .groupBy(HitDetails.timestamp.hour(), groupColumn)
-                .forEach { row ->
-                    val hourString = row[HitDetails.timestamp.hour()].toString().padStart(2, '0') + ":00"
-                    val groupValue = row[groupColumn].toString()
-                    val count = row[HitDetails.id.count()]
-
-                    groupStats.getOrPut(groupValue) { mutableMapOf() }.merge(hourString, count, Long::plus)
-                    totalStats.merge(hourString, count, Long::plus)
-                }
-        }
-
-        println("${date}: ${group}의 그룹별 및 전체 조회수: ${groupStats}, 전체: ${totalStats}")
-        return groupStats.plus("total" to totalStats)
-    }
+//    fun getDailyHitsByUserGroup(date: String, group: String):
+//            Map<String, MutableMap<String, Long>> {
+//        println("${date}에 해당하는, ${group}별 조회수 요청 들어옴")
+//        // 날짜 형식을 yyyy-MM-dd로 파싱
+//        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE)
+//        // 모든 시간대에 대해 조회수를 0으로 초기화
+////    val stats = (0..23).associate { it.toString().padStart(2, '0') + ":00" to 0L }.toMutableMap()
+//        val groupStats = mutableMapOf<String, MutableMap<String, Long>>()
+//        val totalStats = mutableMapOf<String, Long>()
+//        val groupColumn = when (group) {
+//            "genderGroup" -> Users.genderGroup
+//            "ageGroup" -> Users.ageGroup
+//            "bookmark" -> Users.bookmark
+//            else -> throw IllegalArgumentException("Invalid group value")
+//        }
+//        transaction {
+//            val startOfDay = parsedDate.atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
+//            val endOfDay = parsedDate.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toLocalDateTime()
+//            HitDetails
+//                .innerJoin(HitsRecords)
+//                .innerJoin(Users, { HitsRecords.user }, { Users.id })
+//                .slice(
+//                    HitDetails.timestamp.hour(),
+//                    groupColumn,
+//                    HitDetails.id.count()
+//                )
+//                .select {
+//                    (HitDetails.timestamp greaterEq startOfDay) and
+//                            (HitDetails.timestamp less endOfDay)
+//                }
+//                .groupBy(HitDetails.timestamp.hour(), groupColumn)
+//                .forEach { row ->
+//                    val hourString = row[HitDetails.timestamp.hour()].toString().padStart(2, '0') + ":00"
+//                    val groupValue = row[groupColumn].toString()
+//                    val count = row[HitDetails.id.count()]
+//
+//                    groupStats.getOrPut(groupValue) { mutableMapOf() }.merge(hourString, count, Long::plus)
+//                    totalStats.merge(hourString, count, Long::plus)
+//                }
+//        }
+//
+//        println("${date}: ${group}의 그룹별 및 전체 조회수: ${groupStats}, 전체: ${totalStats}")
+//        return groupStats.plus("total" to totalStats)
+//    }
 
     // 사용자
     fun getDailyHitsByAgeGroup(date: String, ageGroup: Int): Map<String, Any> {
@@ -158,11 +158,10 @@ class HitsService {
         println("${date}, ageGroup ${ageGroup}의 조회수 : $result")
         return result
     }
-    fun getHitsByGender() {
 
-    }
+//    fun getHitsByBookmark() {
+//
+//    }
 
-    fun getHitsByBookmark() {
 
-    }
 }

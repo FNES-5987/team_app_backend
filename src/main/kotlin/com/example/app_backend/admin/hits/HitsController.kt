@@ -25,19 +25,19 @@ class HitsController(private val hitsService: HitsService) {
 //        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
 //        return ResponseEntity.ok(stats)
 //    }
-    @GetMapping("/time")
-    fun getTimeHits(
-        @RequestParam date: String,
-        @RequestParam age: String
-    ): ResponseEntity<Map<String, Long>>? {
-        println("date: ${date},${age}")
-        // 서비스 레이어를 통해 해당 날짜의 시간별 조회수 데이터를 가져옵니다.
-        val stats: Map<String, Long> = hitsService.getDailyHits(date)
-//        val stats: Map<String, Long> = hitsService.getDailyHitsWithMaxInfo(date)
-        println("stats: ${stats}")
-        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
-        return ResponseEntity.ok(stats)
-    }
+//    @GetMapping("/time")
+//    fun getTimeHits(
+//        @RequestParam date: String,
+//        @RequestParam age: String
+//    ): ResponseEntity<Map<String, Long>>? {
+//        println("date: ${date},${age}")
+//        // 서비스 레이어를 통해 해당 날짜의 시간별 조회수 데이터를 가져옵니다.
+//        val stats: Map<String, Long> = hitsService.getDailyHits(date)
+////        val stats: Map<String, Long> = hitsService.getDailyHitsWithMaxInfo(date)
+//        println("stats: ${stats}")
+//        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
+//        return ResponseEntity.ok(stats)
+//    }
 
     //    @GetMapping("/daily")
 //    fun getDailyStats(
@@ -52,19 +52,19 @@ class HitsController(private val hitsService: HitsService) {
 //        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
 //        return ResponseEntity.ok(maxInfo)
 //    }
-    @GetMapping("/time/user")
-    fun getTimeHitsByUserGroup(
-        @RequestParam date: String,
-        @RequestParam group: String
-    ): ResponseEntity<Map<String, MutableMap<String, Long>>> {
-        println("date: $date, group: $group")
-        // 서비스 레이어를 통해 해당 날짜와 group의 시간별 조회수 데이터를 가져옵니다.
-        val stats:
-                Map<String, MutableMap<String, Long>> = hitsService.getDailyHitsByUserGroup(date, group)
-        println("stats: $stats")
-        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
-        return ResponseEntity.ok(stats)
-    }
+//    @GetMapping("/time/user")
+//    fun getTimeHitsByUserGroup(
+//        @RequestParam date: String,
+//        @RequestParam group: String
+//    ): ResponseEntity<Map<String, MutableMap<String, Long>>> {
+//        println("date: $date, group: $group")
+//        // 서비스 레이어를 통해 해당 날짜와 group의 시간별 조회수 데이터를 가져옵니다.
+//        val stats:
+//                Map<String, MutableMap<String, Long>> = hitsService.getDailyHitsByUserGroup(date, group)
+//        println("stats: $stats")
+//        // ResponseEntity를 통해 데이터와 함께 HTTP 상태 코드를 클라이언트에게 전달합니다.
+//        return ResponseEntity.ok(stats)
+//    }
 
     @GetMapping("/time/age-group")
     fun getTimeHitsByAgeGroup(

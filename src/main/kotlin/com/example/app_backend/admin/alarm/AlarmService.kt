@@ -1,5 +1,6 @@
 package com.example.app_backend.admin.alarm
 // https://hooks.slack.com/services/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 new
+//https://hooks.slack.com/services/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
 import org.springframework.stereotype.Service
 import java.net.HttpURLConnection
 import java.net.URL
@@ -7,7 +8,7 @@ import java.net.URL
 @Service
 class AlarmService {
     fun sendSlackMessage(webhookUrl: String, message: String) {
-        val url = URL("https://hooks.slack.com/services/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")
+        val url = URL("https://hooks.slack.com/services/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")
         val connection = url.openConnection() as HttpURLConnection
         try {
             connection.doOutput = true
@@ -32,7 +33,7 @@ class AlarmService {
     }
 
     fun sendNotification(itemId: Int): Int {
-        val webhookUrl = "https://hooks.slack.com/services/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"
+        val webhookUrl = "https://hooks.slack.com/services/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"
         val message = "Book with itemId $itemId is missing in the database."
         sendSlackMessage(webhookUrl, message)
         return itemId
