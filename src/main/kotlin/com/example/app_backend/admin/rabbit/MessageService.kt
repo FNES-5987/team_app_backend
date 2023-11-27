@@ -1,11 +1,13 @@
 package com.example.app_backend.admin.rabbit
-
 import com.example.app_backend.admin.alarm.AlarmService
 import com.example.app_backend.admin.book.BookService
 import com.example.app_backend.admin.user.UserDTO
 import com.example.app_backend.admin.user.UserService
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.javatime.hour
+import org.jetbrains.exposed.sql.javatime.month
+import org.jetbrains.exposed.sql.javatime.year
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Service
@@ -17,40 +19,56 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class MessageService(
+    private val alarmService: AlarmService,
     private val userService: UserService,
     private val bookService: BookService
 ) {
     private val objectMapper = jacksonObjectMapper()
+
     @RabbitListener(queues = ["hits-queue"])
     fun processMessage(messageString: String) {
-        // JSON 문자열을 MessageDTO 객체로 변환
-        val message: MessageDTO = objectMapper.readValue(messageString, MessageDTO::class.java)
-        println("Received Message: $message")
-        val messageCreateDateString = message.createDate // 큐에서 받은 문자열
-        // 문자열을 LocalDateTime으로 파싱
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val createDate = LocalDateTime.parse(messageCreateDateString, formatter)
-        println("createDate: $createDate")
-        transaction {
-            // Users 테이블에 데이터 추가
-            val user = userService.findOrCreateUser(
-                nickname = message.nickname,
-                birth = message.birth,
-                gender = message.gender,
-                bookmark = message.bookmark
-            )
-            println("rabbit 사용자: ${user} ")
+        try {
+            // JSON 문자열을 MessageDTO 객체로 변환
+            val message: MessageDTO = objectMapper.readValue(messageString, MessageDTO::class.java)
+            println("Received Message: $message")
 
-            // SimplifiedBooks 테이블에 데이터 추가
-            val book = bookService.findOrCreateBookByItemId(itemId = message.itemId)
-            println("rabbit 도서: ${book} ")
+            // 문자열을 LocalDateTime으로 파싱
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            val createDate = LocalDateTime.parse(message.createDate, formatter)
+            println("Parsed createDate: $createDate")
 
-            addOrUpdateHitsRecord(user, book, message.hitsCount, createDate)
-            val hitRecordId = addOrUpdateHitsRecord(user, book, 1, createDate)
-            addHitDetail(hitRecordId, createDate)
+            // 서버가 UTC를 사용한다고 가정하고 KST로 명시적으로 변환
+            val zonedCreateDate = createDate.atZone(ZoneId.of("UTC")).withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+            println("Zoned createDate: $zonedCreateDate")
+
+            // DB에 저장하기 위해 LocalDateTime으로 다시 변환.
+            val createDateForDb = zonedCreateDate.toLocalDateTime()
+            println("createDate for DB: $createDateForDb")
+
+            // DB 작업
+            transaction {
+                // Users 테이블에 데이터 추가
+                val user = userService.findOrCreateUser(
+                    nickname = message.nickname,
+                    birth = message.birth,
+                    gender = message.gender,
+                    bookmark = message.bookmark
+                )
+                println("rabbit 사용자: ${user} ")
+
+                // SimplifiedBooks 테이블에 데이터 추가
+                val book = bookService.findOrCreateBookByItemId(itemId = message.itemId)
+                println("rabbit 도서: ${book} ")
+
+                addOrUpdateHitsRecord(user, book, message.hitsCount, createDateForDb)
+                val hitRecordId = addOrUpdateHitsRecord(user, book, 1, createDateForDb)
+                addHitDetail(hitRecordId, createDateForDb)
+            }
+        } catch (e: Exception) {
+            // 기타 예외 처리
+            println("General error: ${e.message}")
         }
     }
-
     // 중간테이블
     fun addOrUpdateHitsRecord(user: UserDTO, book: BookDTO, newHitsCount: Long, createDateForDb: LocalDateTime): Long {
 
@@ -87,3 +105,4 @@ class MessageService(
         }
     }
 }
+
