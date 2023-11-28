@@ -67,7 +67,7 @@ data class BookResponse (
 )
 // 리스트
 // 베스트 셀러 http://www.aladin.co.kr/ttb/api/ItemList.aspx?ttbkey=ttbrlathgus5411950001&QueryType=Bestseller&MaxResults=100&start=1&SearchTarget=Book&output=xml&Version=20131101
-@FeignClient(name = "aladdin", url = "http://www.aladin.co.kr/ttb/api")
+@FeignClient(name = "aladin", url="http://www.aladin.co.kr/ttb/api")
 interface AladinClient {
     @GetMapping("/ItemList.aspx?ttbkey=ttbrlathgus5411950001&QueryType=Bestseller&MaxResults=100&start=1&SearchTarget=Book&output=js&Version=20131101")
     fun getBest(): BestListResponse
