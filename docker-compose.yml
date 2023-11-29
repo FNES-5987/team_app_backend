@@ -1,0 +1,22 @@
+version: "3"
+services:
+  # 서비스명을 기본 호스트네임으로 잡는다. hostname: redis
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379" # Redis의 기본 포트입니다.
+    networks:
+      - my-network
+  app:
+    image: "kim05412/app_backend" # 여기에 Spring Boot 도커 이미지 이름을 사용하세요.
+    ports:
+      - "8082:8082" # 호스트의 포트를 컨테이너의 포트에 매핑합니다.
+    networks:
+      - my-network
+    depends_on:
+      - redis
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+networks:
+  my-network:
+    driver: bridge

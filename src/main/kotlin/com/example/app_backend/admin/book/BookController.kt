@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/books")
 // Service 주입
 class BookController(private val bookService: BookService) {
+    @CrossOrigin(origins = ["http://192.168.100.36:8081"])
     @GetMapping("/cache")
     fun getCacheBooks(): List<SimplifiedBookDTO> {
         val cachedBooks = bookService.getCacheBooks()
