@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/books")
 // Service 주입
 class BookController(private val bookService: BookService) {
+
     @CrossOrigin(origins = ["http://192.168.100.36:8081"])
     @GetMapping("/cache")
     fun getCacheBooks(): List<SimplifiedBookDTO> {
@@ -108,22 +109,4 @@ class BookController(private val bookService: BookService) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
         }
     }
-
-    //통계
-    @GetMapping("/views/book")
-    fun getHitsByBooks(
-        @RequestParam bookColumn: Column<String>,
-        @RequestParam userAttributeColumn: Column<String>
-    ): List<BookColumnViewsByUserAttribute> {
-        return bookService.findViewsByBookColumnAndUserAttribute(bookColumn, userAttributeColumn)
-    }
-
-    @GetMapping("/views/user")
-    fun getHitsByUsers(
-        @RequestParam userColumn: Column<String>,
-        @RequestParam bookAttributeColumn: Column<String>
-    ): List<UserColumnViewsByBookAttribute> {
-        return bookService.findViewsByUserColumnAndBookAttribute(userColumn, bookAttributeColumn)
-    }
-
 }

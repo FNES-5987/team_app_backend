@@ -4,8 +4,6 @@ import com.example.app_backend.admin.alarm.AlarmService
 import com.example.app_backend.admin.rabbit.BookDTO
 import com.example.app_backend.admin.rabbit.HitDetails
 import com.example.app_backend.admin.rabbit.HitsRecords
-import com.example.app_backend.admin.user.UserColumnViewsByBookAttribute
-import com.example.app_backend.admin.user.Users
 import com.example.app_backend.api.SimplifiedBooks
 import com.example.app_backend.api.TodayBooks
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -22,7 +20,6 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class BookService(
-        // 중간 저장소
         // String 타입의 키와 값으로 데이터를 저장하거나 조회
         private val redisTemplate: RedisTemplate<String, String>,
         private val alarmService: AlarmService,
@@ -104,50 +101,6 @@ class BookService(
         }
     }
 
-    fun updateCache(newBook: SimplifiedBookDTO? = null, deletedItemIds: List<Int>? = null): List<SimplifiedBookDTO> {
-        println("updateCache 요청 들어 옴")
-        // Redis 캐시에서 "books"라는 키로 저장된 데이터를 가져옴.
-        val cacheData = redisTemplate.opsForValue().get("books")
-        val booksFromCache = if (cacheData != null) {
-            mapper.readValue<List<SimplifiedBookDTO>>(cacheData)
-        } else {
-            emptyList()
-        }
-
-        if (deletedItemIds != null) {
-            println("updateCache 삭제 요청 옴.")
-            // 일치하는 것 제외하고 새로운 데이터로 set함.
-            val updatedBooks = booksFromCache.filterNot { it.itemId in deletedItemIds }
-            redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-//            println("삭제 됨.Updated cache: ${redisTemplate.opsForValue().get("books")}")
-            return updatedBooks
-        }
-
-        if (newBook != null) {
-            val isNewBook = booksFromCache.none { it.itemId == newBook.itemId }
-            val isExistingBook = booksFromCache.any { it.itemId == newBook.itemId }
-
-            if (isNewBook) {
-                println("updateCache 추가 요청 옴")
-                // 새로운 책을 추가
-                val updatedBooks = booksFromCache + newBook
-                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-//                println("Updated cache with new book: ${redisTemplate.opsForValue().get("books")}")
-                return updatedBooks
-            } else if (isExistingBook) {
-                println("updateCache 수정 요청 옴")
-                // 기존 책 정보를 삭제하고, 수정된 책 정보를 추가
-                val updatedBooks = booksFromCache.map {
-                    if (it.itemId == newBook.itemId) newBook else it
-                }
-                redisTemplate.opsForValue().set("books", mapper.writeValueAsString(updatedBooks))
-//                println("Updated cache with updated book: ${redisTemplate.opsForValue().get("books")}")
-                return updatedBooks
-            }
-        }
-        // 아무런 변경이 없으면 기존 정보 반환
-        return getBooks()
-    }
 
 
     // DB
@@ -156,24 +109,24 @@ class BookService(
         return transaction {
             SimplifiedBooks.selectAll().map { row ->
                 SimplifiedBookDTO(
-                        id = row[SimplifiedBooks.id].value,
-                        createdDate = row[SimplifiedBooks.createdDate],
-                        publisher = row[SimplifiedBooks.publisher],
-                        title = row[SimplifiedBooks.title],
-                        link = row[SimplifiedBooks.link],
-                        author = row[SimplifiedBooks.author],
-                        pubDate = row[SimplifiedBooks.pubDate],
-                        description = row[SimplifiedBooks.description],
-                        isbn = row[SimplifiedBooks.isbn],
-                        isbn13 = row[SimplifiedBooks.isbn13],
-                        itemId = row[SimplifiedBooks.itemId],
-                        priceSales = row[SimplifiedBooks.priceSales],
-                        priceStandard = row[SimplifiedBooks.priceStandard],
-                        stockStatus = row[SimplifiedBooks.stockStatus],
-                        cover = row[SimplifiedBooks.cover],
-                        categoryId = row[SimplifiedBooks.categoryId],
-                        categoryName = row[SimplifiedBooks.categoryName],
-                        customerReviewRank = row[SimplifiedBooks.customerReviewRank]
+                    id = row[SimplifiedBooks.id].value,
+                    createdDate = row[SimplifiedBooks.createdDate],
+                    publisher = row[SimplifiedBooks.publisher],
+                    title = row[SimplifiedBooks.title],
+                    link = row[SimplifiedBooks.link],
+                    author = row[SimplifiedBooks.author],
+                    pubDate = row[SimplifiedBooks.pubDate],
+                    description = row[SimplifiedBooks.description],
+                    isbn = row[SimplifiedBooks.isbn],
+                    isbn13 = row[SimplifiedBooks.isbn13],
+                    itemId = row[SimplifiedBooks.itemId],
+                    priceSales = row[SimplifiedBooks.priceSales],
+                    priceStandard = row[SimplifiedBooks.priceStandard],
+                    stockStatus = row[SimplifiedBooks.stockStatus],
+                    cover = row[SimplifiedBooks.cover],
+                    categoryId = row[SimplifiedBooks.categoryId],
+                    categoryName = row[SimplifiedBooks.categoryName],
+                    customerReviewRank = row[SimplifiedBooks.customerReviewRank]
                 )
             }
         }
@@ -222,29 +175,29 @@ class BookService(
     fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
         return transaction {
             SimplifiedBooks.select { SimplifiedBooks.itemId eq itemId }
-                    .map { row ->
-                        SimplifiedBookDTO(
-                                id = row[SimplifiedBooks.id].value,
-                                createdDate = row[SimplifiedBooks.createdDate],
-                                publisher = row[SimplifiedBooks.publisher],
-                                title = row[SimplifiedBooks.title],
-                                link = row[SimplifiedBooks.link],
-                                author = row[SimplifiedBooks.author],
-                                pubDate = row[SimplifiedBooks.pubDate],
-                                description = row[SimplifiedBooks.description],
-                                isbn = row[SimplifiedBooks.isbn],
-                                isbn13 = row[SimplifiedBooks.isbn13],
-                                itemId = row[SimplifiedBooks.itemId],
-                                priceSales = row[SimplifiedBooks.priceSales],
-                                priceStandard = row[SimplifiedBooks.priceStandard],
-                                stockStatus = row[SimplifiedBooks.stockStatus],
-                                cover = row[SimplifiedBooks.cover],
-                                categoryId = row[SimplifiedBooks.categoryId],
-                                categoryName = row[SimplifiedBooks.categoryName],
-                                customerReviewRank = row[SimplifiedBooks.customerReviewRank]
-                        )
-                    }
-                    .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
+                .map { row ->
+                    SimplifiedBookDTO(
+                        id = row[SimplifiedBooks.id].value,
+                        createdDate = row[SimplifiedBooks.createdDate],
+                        publisher = row[SimplifiedBooks.publisher],
+                        title = row[SimplifiedBooks.title],
+                        link = row[SimplifiedBooks.link],
+                        author = row[SimplifiedBooks.author],
+                        pubDate = row[SimplifiedBooks.pubDate],
+                        description = row[SimplifiedBooks.description],
+                        isbn = row[SimplifiedBooks.isbn],
+                        isbn13 = row[SimplifiedBooks.isbn13],
+                        itemId = row[SimplifiedBooks.itemId],
+                        priceSales = row[SimplifiedBooks.priceSales],
+                        priceStandard = row[SimplifiedBooks.priceStandard],
+                        stockStatus = row[SimplifiedBooks.stockStatus],
+                        cover = row[SimplifiedBooks.cover],
+                        categoryId = row[SimplifiedBooks.categoryId],
+                        categoryName = row[SimplifiedBooks.categoryName],
+                        customerReviewRank = row[SimplifiedBooks.customerReviewRank]
+                    )
+                }
+                .singleOrNull() // 여기서 singleOrNull()을 사용하여 해당하는 데이터가 없을 경우 null을 반환하도록 함
         }
     }
 
@@ -257,13 +210,13 @@ class BookService(
         transaction {
             // 먼저 삭제해야 할 book_id를 찾음
             val bookIdsToDelete = SimplifiedBooks.slice(SimplifiedBooks.id)
-                    .select { SimplifiedBooks.itemId inList itemIds }
-                    .map { it[SimplifiedBooks.id].value }
+                .select { SimplifiedBooks.itemId inList itemIds }
+                .map { it[SimplifiedBooks.id].value }
 
             // hits_record와 연관된 hitdetails 행들을 찾아 삭제
             val hitRecordIdsToDelete = HitsRecords.slice(HitsRecords.id)
-                    .select { HitsRecords.book inList bookIdsToDelete }
-                    .map { it[HitsRecords.id].value }
+                .select { HitsRecords.book inList bookIdsToDelete }
+                .map { it[HitsRecords.id].value }
 
             HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
 
@@ -339,16 +292,16 @@ class BookService(
             }
             query.map { row ->
                 TodayBookDTO(
-                        title = row[TodayBooks.title],
-                        author = row[TodayBooks.author],
-                        priceSales = row[TodayBooks.priceSales],
-                        cover = row[TodayBooks.cover],
-                        todayLetter = row[TodayBooks.todayLetter],
-                        itemId = row[TodayBooks.itemId],
-                        readDate = row[TodayBooks.readData]
+                    title = row[TodayBooks.title],
+                    author = row[TodayBooks.author],
+                    priceSales = row[TodayBooks.priceSales],
+                    cover = row[TodayBooks.cover],
+                    todayLetter = row[TodayBooks.todayLetter],
+                    itemId = row[TodayBooks.itemId],
+                    readDate = row[TodayBooks.readData]
                 )
             }
-                    .singleOrNull()
+                .singleOrNull()
         }
     }
 
@@ -359,12 +312,12 @@ class BookService(
         return if (existingBook != null) {
             // 도서가 존재하는 경우 해당 도서의 DTO를 반환
             BookDTO(
-                    id = existingBook[SimplifiedBooks.id].value,
-                    itemId = existingBook[SimplifiedBooks.itemId],
-                    title = existingBook[SimplifiedBooks.title],
-                    author = existingBook[SimplifiedBooks.author],
-                    publisher = existingBook[SimplifiedBooks.publisher],
-                    categoryName = existingBook[SimplifiedBooks.categoryName]
+                id = existingBook[SimplifiedBooks.id].value,
+                itemId = existingBook[SimplifiedBooks.itemId],
+                title = existingBook[SimplifiedBooks.title],
+                author = existingBook[SimplifiedBooks.author],
+                publisher = existingBook[SimplifiedBooks.publisher],
+                categoryName = existingBook[SimplifiedBooks.categoryName]
             )
         } else {
             // 존재하지 않으면 ->1. DB 새로운 도서를 추가
@@ -393,85 +346,17 @@ class BookService(
             }.value
             // 새로 추가된 도서의 DTO 생성
             val newBookDTO = BookDTO(
-                    id = newBookId,
-                    itemId = itemId,
-                    title = "Unknown",
-                    author = "Unknown",
-                    publisher = "Unknown",
-                    categoryName = "Unknown"
+                id = newBookId,
+                itemId = itemId,
+                title = "Unknown",
+                author = "Unknown",
+                publisher = "Unknown",
+                categoryName = "Unknown"
             )
             alarmService.sendNotification(itemId)
             println("SimplifiedBooks 신간추가: ${itemId}")
             return newBookDTO
         }
     }
-
-    //조회수
-    fun findViewsByBookColumnAndUserAttribute(
-            bookColumn: Column<String>,
-            userAttributeColumn: Column<String>
-    ): List<BookColumnViewsByUserAttribute> {
-        // 데이터베이스 트랜잭션을 시작합니다.
-        return transaction {
-            // HitsRecords 테이블과 Users, SimplifiedBooks 테이블을 조인합니다.
-            (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
-                    // 관심 있는 컬럼을 선택합니다.
-                    .slice(bookColumn, userAttributeColumn, HitsRecords.hitsCount.sum())
-                    // 모든 레코드를 선택합니다.
-                    .selectAll()
-                    // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
-                    .groupBy(bookColumn, userAttributeColumn)
-                    // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
-                    .map { resultRow ->
-                        BookColumnViewsByUserAttribute(
-                                bookColumnValue = resultRow[bookColumn],
-                                userAttributeKey = userAttributeColumn.name,
-                                userAttribute = resultRow[userAttributeColumn],
-                                totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
-                        )
-                    }
-        }
-    }
-
-    //사용자 별
-    //조회수
-    fun findViewsByUserColumnAndBookAttribute(
-            userColumn: Column<String>,
-            bookAttributeColumn: Column<String>
-    ): List<UserColumnViewsByBookAttribute> {
-        // 데이터베이스 트랜잭션을 시작합니다.
-        return transaction {
-            // HitsRecords 테이블과 Users, Books 테이블을 조인합니다.
-            (HitsRecords innerJoin Users innerJoin SimplifiedBooks)
-                    // 관심 있는 컬럼을 선택합니다.
-                    .slice(userColumn, bookAttributeColumn, HitsRecords.hitsCount.sum())
-                    // 모든 레코드를 선택합니다.
-                    .selectAll()
-                    // 지정된 사용자 컬럼과 도서 속성 컬럼으로 그룹화합니다.
-                    .groupBy(userColumn, bookAttributeColumn)
-                    // 결과를 UserColumnViewsByBookAttribute 객체로 매핑합니다.
-                    .map { resultRow ->
-                        UserColumnViewsByBookAttribute(
-                                userColumnValue = resultRow[userColumn],
-                                bookAttributeKey = bookAttributeColumn.name,
-                                bookAttributeValue = resultRow[bookAttributeColumn],
-                                totalViews = resultRow[HitsRecords.hitsCount.sum()] ?: 0
-                        )
-                    }
-        }
-    }
-
-
-    // User Select
-    fun getBooksByBirth(birth: Int): List<ResultRow> {
-        // 세 개의 테이블에 모두 해당하는 레코드만
-        return (SimplifiedBooks innerJoin HitsRecords innerJoin Users)
-                .select { Users.birth eq birth }
-                .groupBy(SimplifiedBooks.itemId, SimplifiedBooks.publisher, SimplifiedBooks.title, SimplifiedBooks.author, SimplifiedBooks.categoryName)
-                .orderBy(HitsRecords.hitsCount to SortOrder.DESC)
-                .map { it }
-    }
-
-
 }
 
