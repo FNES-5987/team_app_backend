@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-@RequestMapping("/newBooks")
+@RequestMapping("/api/manager/newBooks")
 class NewBookController(
     private val jdbcTemplate: JdbcTemplate
 ) {

@@ -15,7 +15,7 @@ import java.sql.Connection
 // InventoryController
 
 @RestController
-@RequestMapping("/api/inventories")
+@RequestMapping("/api/manager/inventories")
 class InventoryController(private val resourceLoader: ResourceLoader) {
     @GetMapping
     fun fetch() = transaction {

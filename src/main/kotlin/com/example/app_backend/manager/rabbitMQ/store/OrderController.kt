@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/api/manager/orders")
 class OrderController(private val jdbcTemplate: JdbcTemplate) {
     @GetMapping
     fun getAllOrders(): List<OrderSales> {

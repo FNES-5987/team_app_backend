@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 import java.time.LocalDate
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/manager")
 class StatisticsController(private val redisService: RedisService) {
 
     @GetMapping("/redis-data")

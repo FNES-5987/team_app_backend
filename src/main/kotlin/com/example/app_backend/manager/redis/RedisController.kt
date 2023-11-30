@@ -11,7 +11,7 @@ data class InventoryData(val itemId: String, val stockStatus: String, val isbn: 
 @RestController
 class RedisController(private val redisTemplate: RedisTemplate<String, Any>) {
 
-    @PostMapping("/api/send-to-redis")
+    @PostMapping("/api/manager/send-to-redis")
     fun sendToRedis(@RequestBody data: InventoryData): String {
         val existingData = redisTemplate.opsForValue().get(data.itemId)
         if (existingData != null) {

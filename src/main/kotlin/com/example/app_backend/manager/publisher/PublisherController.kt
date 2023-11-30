@@ -13,7 +13,7 @@ data class PublisherInfo(
 )
 
 @RestController
-@RequestMapping("/publishers")
+@RequestMapping("/api/manager/publishers")
 class PublisherController(
     private val resourceLoader: ResourceLoader
 ) {
