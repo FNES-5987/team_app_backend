@@ -7,18 +7,17 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("api/books")
 // Service 주입
 class BookController(private val bookService: BookService) {
-
-    @CrossOrigin(origins = ["http://192.168.100.36:8081"])
+//    private val POST_FILE_PATH = "tmp/files/post";
+    @CrossOrigin(origins = ["http://192.168.100.36:8081","ec2-15-164-111-91.ap-northeast-2.compute.amazonaws.com"])
     @GetMapping("/cache")
     fun getCacheBooks(): List<SimplifiedBookDTO> {
         val cachedBooks = bookService.getCacheBooks()
 //        println("cacheBooks 응답 성공")
         return cachedBooks
     }
-
     // 추가
     @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
@@ -32,7 +31,6 @@ class BookController(private val bookService: BookService) {
             ResponseEntity.status(HttpStatus.CONFLICT).body(emptyList())
         }
     }
-
     @DeleteMapping
     fun deleteBooks(@RequestParam("itemIds") itemIds: List<Int>): ResponseEntity<Map<String, Any>> {
         // DB 업데이트 기능 포함
@@ -53,7 +51,6 @@ class BookController(private val bookService: BookService) {
             )
         }
     }
-
     //수정
     @PutMapping("/{itemId}")
     fun updateBook(
@@ -97,7 +94,7 @@ class BookController(private val bookService: BookService) {
         }
     }
 
-    @CrossOrigin(origins = ["http://192.168.100.36:8081"])
+    @CrossOrigin(origins = ["http://192.168.100.36:8081","ec2-15-164-111-91.ap-northeast-2.compute.amazonaws.com"])
     @GetMapping("/today")
     fun getLatestTodayBook(@RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {
         println("오늘의책 get요청")
@@ -109,4 +106,5 @@ class BookController(private val bookService: BookService) {
             ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
         }
     }
+
 }

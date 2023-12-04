@@ -14,6 +14,9 @@ class WebMvcConfig: WebMvcConfigurer {
             .allowedOrigins(
                 "http://localhost:5000",
                 "http://localhost:5500",
+                "https://d1afmp6440ja0l.cloudfront.net",
+                // commerce
+                "https://d7gp93w7wekd9.cloudfront.net",
             ) // 로컬 호스트 origin 허용
             .allowedMethods("*")
             .allowCredentials(true)

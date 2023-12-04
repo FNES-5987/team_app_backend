@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 
 
 @RestController
-@RequestMapping("/hits")
+@RequestMapping("api/hits")
 class HitsController(private val hitsService: HitsService) {
     @GetMapping("/time/age-group")
     fun getTimeHitsByAgeGroup(

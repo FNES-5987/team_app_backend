@@ -13,6 +13,17 @@ services:
       - "8082:8082" # 호스트의 포트를 컨테이너의 포트에 매핑합니다.
     networks:
       - my-network
+#      컨테이너의 /tmp 경로를 my-volume에 연결
+
+    volumes:
+#      호스트 경로 :컨테이너 경로
+#      -호스트 볼륨명: 컨테이너 경로
+#      - ------
+      # 우분투 리눅스 볼륨위치
+        # /var/lib/docker/volumes
+        # 윈도우즈 볼륨위치
+      # \\wsl$\docker-desktop-data\data\docker\volumes
+      - my-volume:/tmp
     depends_on:
       - redis
     environment:
@@ -20,3 +31,5 @@ services:
 networks:
   my-network:
     driver: bridge
+volumes:
+    my-volume:

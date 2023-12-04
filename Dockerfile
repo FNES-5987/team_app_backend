@@ -3,7 +3,7 @@
 FROM eclipse-temurin:17-jre
 #컨테이너를 연결할 폴더()
 #TMP: 임시 디렉토리
-VOLUME /tmp
+#VOLUME /tmp
 # jar 실행 환경 변수 /=경로
 ARG JAR_FILE=build/libs/*jar
 #실제 경로에서 파일을 VOLUME 경로에 복사
@@ -13,4 +13,4 @@ COPY ${JAR_FILE} app.jar
 #main(args: Array<String>) -> 배열 = 매가변수
 #문자열 배열로
 #ENTRYPOINT ${JAR_FILE} app.jar
-ENTRYPOINT ["java","-jar","/app.jar"]
+ENTRYPOINT ["java","-jar","app.jar"]

@@ -31,14 +31,22 @@ class BookService(
     private val mapper = jacksonObjectMapper()
     // 개별 책 정보 저장
     private fun saveBookToCache(book: SimplifiedBookDTO) {
-        val bookKey = "book:${book.itemId}"
-        redisTemplate.opsForValue().set(bookKey, mapper.writeValueAsString(book))
+        try {
+            val bookKey = "book:${book.itemId}"
+            redisTemplate.opsForValue().set(bookKey, mapper.writeValueAsString(book))
+        } catch (e: Exception) {
+            println("redis 업데이트 실패: ${e.message}")
+        }
     }
 
     // 개별 책 정보 삭제
     private fun deleteBookFromCache(itemId: Int) {
-        val bookKey = "book:$itemId"
-        redisTemplate.delete(bookKey)
+        try {
+            val bookKey = "book:$itemId"
+            redisTemplate.delete(bookKey)
+        } catch (e: Exception) {
+            println("redis 삭제 업데이트 실패:: ${e.message}")
+        }
     }
 
     //    마지막 데이터가 최근 추가된 데이터니까
@@ -125,19 +133,14 @@ class BookService(
         val booksFromCache = bookKeys.mapNotNull { key ->
             redisTemplate.opsForValue().get(key)?.let { mapper.readValue(it, SimplifiedBookDTO::class.java) }
         }
-
         // 마지막으로 추가된 책 확인 (Redis)
         checkLast(booksFromCache)
-
         // DB에서 책 정보를 가져옴
         val booksFromDB = getBooks()
-
         // 마지막으로 추가된 책 확인 (MySQL)
         checkLast(booksFromDB)
-
         // 캐시 데이터와 DB 데이터 일치 여부 확인
         val isDataConsistent = booksFromCache.toSet() == booksFromDB.toSet()
-
         // 결과 출력 및 성능 측정
         return if (isDataConsistent) {
             println("Data from Redis")
