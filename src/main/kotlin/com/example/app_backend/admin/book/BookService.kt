@@ -33,9 +33,9 @@ class BookService(
     private fun saveBookToCache(book: SimplifiedBookDTO) {
         try {
             val bookKey = "book:${book.itemId}"
-            println("Redis에 책 저장 시도: 키 = $bookKey")
+            println("Redis에 책 업데이트 시도: 키 = $bookKey")
             redisTemplate.opsForValue().set(bookKey, mapper.writeValueAsString(book))
-            println("Redis에 책 저장 성공: $book")
+            println("Redis에 책 업데이트 성공: $book")
         } catch (e: Exception) {
             println("redis 업데이트 실패: ${e.message}")
         }
@@ -324,15 +324,17 @@ class BookService(
             val hitRecordIdsToDelete = HitsRecords.slice(HitsRecords.id)
                 .select { HitsRecords.book inList bookIdsToDelete }
                 .map { it[HitsRecords.id].value }
+            println("hitRecordIdsToDelete 삭제된 행의 수: $hitRecordIdsToDelete")
 
             HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
-
+            println("HitDetails 삭제된 행의 수: $HitDetails")
             // 이제 hits_record 테이블에서 참조하는 행들을 삭제
             HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
-
+            println("HitsRecords 삭제된 행의 수: $HitsRecords")
             // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
-           val book= SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIdList }
-            println("SimplifiedBooks에서 삭제된 행의 수: ${book}")
+            // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
+            val deletedRows = SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIdList }
+            println("SimplifiedBooks에서 삭제된 행의 수: $deletedRows")
         }
         // 삭제된 캐시 업데이트
         // 캐시에서 삭제된 책 정보 삭제
