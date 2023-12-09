@@ -19,7 +19,6 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class MessageService(
-    private val alarmService: AlarmService,
     private val userService: UserService,
     private val bookService: BookService
 ) {

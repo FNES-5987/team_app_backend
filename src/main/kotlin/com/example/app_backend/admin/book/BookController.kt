@@ -24,6 +24,7 @@ class BookController(private val bookService: BookService) {
         val books = bookService.addBook(book)
         return if (books.isNotEmpty()) {
             println("AddBooks: 도서 추가됨")
+            println("itemId: ${book.itemId}")
             ResponseEntity.ok(books)
 
         } else {
@@ -94,6 +95,7 @@ class BookController(private val bookService: BookService) {
         }
     }
 
+// 도서몰 서버 접근 허용
     @CrossOrigin(origins = ["http://192.168.100.36:8081","ec2-15-164-111-91.ap-northeast-2.compute.amazonaws.com"])
     @GetMapping("/today")
     fun getLatestTodayBook(@RequestParam("readDate") readDate: String): ResponseEntity<TodayBookDTO> {

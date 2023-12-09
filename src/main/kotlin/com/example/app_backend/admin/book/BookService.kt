@@ -33,7 +33,9 @@ class BookService(
     private fun saveBookToCache(book: SimplifiedBookDTO) {
         try {
             val bookKey = "book:${book.itemId}"
+            println("Redis에 책 저장 시도: 키 = $bookKey")
             redisTemplate.opsForValue().set(bookKey, mapper.writeValueAsString(book))
+            println("Redis에 책 저장 성공: $book")
         } catch (e: Exception) {
             println("redis 업데이트 실패: ${e.message}")
         }
@@ -43,7 +45,10 @@ class BookService(
     private fun deleteBookFromCache(itemId: Int) {
         try {
             val bookKey = "book:$itemId"
+            println("Redis에서 책 삭제 시도: 키 = $bookKey")
             redisTemplate.delete(bookKey)
+            println("Redis에서 책 삭제 성공: 키 = $bookKey")
+
         } catch (e: Exception) {
             println("redis 삭제 업데이트 실패:: ${e.message}")
         }
@@ -143,15 +148,16 @@ class BookService(
         val isDataConsistent = booksFromCache.toSet() == booksFromDB.toSet()
         // 결과 출력 및 성능 측정
         return if (isDataConsistent) {
+            // 데이터가 일치하면 Redis에서 가져온 데이터 반환
             println("Data from Redis")
-            val end = System.currentTimeMillis()
-            println("Time taken from Redis: ${end - start} ms")
             booksFromCache
         } else {
+            // 데이터가 불일치하면 MySQL에서 가져온 데이터 반환
             println("Data from MySQL")
-            val end = System.currentTimeMillis()
-            println("Time taken from MySQL: ${end - start} ms")
             booksFromDB
+        }.also {
+            val end = System.currentTimeMillis()
+            println("Time taken: ${end - start} ms")
         }
     }
 
@@ -301,14 +307,17 @@ class BookService(
 
 
     // DB에서 책을 삭제
-    fun deleteBooks(itemIds: List<Int>): List<SimplifiedBookDTO> {
+    fun deleteBooks(itemIdList: List<Int>): List<SimplifiedBookDTO> {
         println("deleteBooks 요청 들어옴")
-        println("삭제 요청 리스트 데이터: $itemIds")
+        println("삭제 요청 리스트 데이터: $itemIdList")
+
+//        val check = SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIdList }
+
         // DB에서 책과 관련된 hitdetails와 hits_record를 먼저 삭제
         transaction {
             // 먼저 삭제해야 할 book_id를 찾음
             val bookIdsToDelete = SimplifiedBooks.slice(SimplifiedBooks.id)
-                .select { SimplifiedBooks.itemId inList itemIds }
+                .select { SimplifiedBooks.itemId inList itemIdList }
                 .map { it[SimplifiedBooks.id].value }
 
             // hits_record와 연관된 hitdetails 행들을 찾아 삭제
@@ -322,11 +331,12 @@ class BookService(
             HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
 
             // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
-            SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIds }
+           val book= SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIdList }
+            println("SimplifiedBooks에서 삭제된 행의 수: ${book}")
         }
         // 삭제된 캐시 업데이트
         // 캐시에서 삭제된 책 정보 삭제
-        itemIds.forEach { deleteBookFromCache(it) }
+        itemIdList.forEach { deleteBookFromCache(it) }
         return getBooks()
     }
 
