@@ -13,8 +13,11 @@ class BookController(private val bookService: BookService) {
 //    private val POST_FILE_PATH = "tmp/files/post";
     @CrossOrigin(origins = ["http://192.168.100.36:8081","ec2-15-164-111-91.ap-northeast-2.compute.amazonaws.com"])
     @GetMapping("/cache")
-    fun getCacheBooks(): List<SimplifiedBookDTO> {
-        val cachedBooks = bookService.getCacheBooks()
+    fun getCacheBooks(
+    @RequestParam(required = false, defaultValue = "1") page: Int,
+    @RequestParam(required = false, defaultValue = "100") size: Int
+): List<SimplifiedBookDTO>  {
+    val cachedBooks = bookService.getCacheBooks(page, size)
 //        println("cacheBooks 응답 성공")
         return cachedBooks
     }

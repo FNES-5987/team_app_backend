@@ -1,16 +1,21 @@
 package com.example.app_backend.api
 
+import com.example.app_backend.admin.book.BookService
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+
 @Service
 class ApiService(private val aladinClient: AladinClient) {
+    @Autowired
+    private val bookService: BookService? = null
 //    private val mapper = jacksonObjectMapper()
     @Scheduled(fixedRate = 1000 * 60 * 60 * 12)
     fun fetchGetBest() {
@@ -29,17 +34,15 @@ class ApiService(private val aladinClient: AladinClient) {
             println(bestItem)
 
             for (best in bestItem) {
-//                    val bestJson = mapper.writeValueAsString(best)
                 saveBest(best, formattedDate)
-
-//                    println("저장")
-
+                // 해당 출판사 저장
                 val pub = best.publisher
                 savePublisher(pub, formattedDate)
 //                    println("출판사 저장")
-//                    println(pub)
                                 }
         }
+        bookService?.initializeCache()
+
     } finally {
         // 트랜잭션 종료
         transaction { commit() }
@@ -49,10 +52,8 @@ class ApiService(private val aladinClient: AladinClient) {
         try {
             val bookItem = aladinClient.getBook(publisher).item
 //            println(bookItem)
-            //bookItem(books): book리스트
                 for (book in bookItem) {
                     saveBook(book, formattedDate)
-//                    println("saveBook 저장")
                 }
             }
         finally {
@@ -98,10 +99,8 @@ class ApiService(private val aladinClient: AladinClient) {
     fun savePublisher(pub: String, formattedDate: String) {
         transaction {
             val existingPublisher = UniquePublisher.select { UniquePublisher.publisher eq pub }.firstOrNull()
-
             if (existingPublisher == null) {
                 UniquePublisher.insert {
-                    //db저장
                     it[publisher] = pub
                 }
                 fetchGetBook(pub, formattedDate)

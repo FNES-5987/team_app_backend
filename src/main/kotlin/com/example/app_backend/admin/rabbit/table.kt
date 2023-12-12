@@ -24,14 +24,6 @@ object HitDetails : LongIdTable("hits_detail") {
     val timestamp = datetime("timestamp")
 }
 
-
-object  HourlyHitsRecords:LongIdTable("hourly_hits") {
-    val user = reference("user_id", Users).entityId()
-    val book = reference("book_id", SimplifiedBooks).entityId()
-    val hitsCount = long("hits_count").default(1)
-    val createdDate = datetime("created_date")
-}
-
 object Message :LongIdTable("message") {
     val nickname = varchar("nickname",215)
     val birth = integer("birth")
@@ -40,13 +32,6 @@ object Message :LongIdTable("message") {
     val hitsCount = long("hit")
     val createDate = varchar("created_date",13)
 
-}
-object ExceptionError:LongIdTable("Exception_Book"){
-    val nickname = varchar("nickname",215)
-    val birth = integer("birth")
-    val gender = integer("gender")
-    val itemId = integer("item_id")
-    val hitsCount = long("hit")
 }
 
 @Configuration
