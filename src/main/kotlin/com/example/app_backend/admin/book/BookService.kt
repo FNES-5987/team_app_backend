@@ -20,13 +20,13 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class BookService(
-        // 중간 저장소
-        // String 타입의 키와 값으로 데이터를 저장하거나 조회
-        private val redisTemplate: RedisTemplate<String, String>,
-        private val alarmService: AlarmService,
+    // 중간 저장소
+    // String 타입의 키와 값으로 데이터를 저장하거나 조회
+    private val redisTemplate: RedisTemplate<String, String>,
+    private val alarmService: AlarmService,
 
 
-        ) {
+    ) {
     // Java 객체와 JSON 문자열 간의 변환
     private val mapper = jacksonObjectMapper()
 
@@ -465,4 +465,3 @@ class BookService(
         }
     }
 }
-

@@ -41,7 +41,7 @@ class ApiService(private val aladinClient: AladinClient) {
 //                    println("출판사 저장")
                                 }
         }
-        bookService?.initializeCache()
+//        bookService?.initializeCache()
 
     } finally {
         // 트랜잭션 종료
