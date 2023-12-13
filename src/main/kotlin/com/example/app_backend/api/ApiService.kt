@@ -13,9 +13,7 @@ import java.time.format.DateTimeFormatter
 
 
 @Service
-class ApiService(private val aladinClient: AladinClient) {
-    @Autowired
-    private val bookService: BookService? = null
+class ApiService(private val aladinClient: AladinClient, private val bookService: BookService) {
 //    private val mapper = jacksonObjectMapper()
     @Scheduled(fixedRate = 1000 * 60 * 60 * 12)
     fun fetchGetBest() {
@@ -39,15 +37,15 @@ class ApiService(private val aladinClient: AladinClient) {
                 val pub = best.publisher
                 savePublisher(pub, formattedDate)
 //                    println("출판사 저장")
-                                }
+            }
         }
-//        bookService?.initializeCache()
-
-    } finally {
-        // 트랜잭션 종료
-        transaction { commit() }
+        println("redis초기화")
+        bookService.initializeCache()
+    } catch (e: Exception) {
+        println("알라딘 DB 저장 실패: ${e.message}")
     }
     }
+    
     fun fetchGetBook(publisher: String, formattedDate: String){
         try {
             val bookItem = aladinClient.getBook(publisher).item
@@ -56,6 +54,7 @@ class ApiService(private val aladinClient: AladinClient) {
                     saveBook(book, formattedDate)
                 }
             }
+
         finally {
             // 트랜잭션 종료
             transaction { commit() }
