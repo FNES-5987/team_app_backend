@@ -240,7 +240,7 @@ class BookService(
     val formattedDate = currentTime.format(formatter)
 
     //mysql DB
-    fun addBook(book: SimplifiedBookDTO): List<SimplifiedBookDTO> {
+    fun addBook(book: SimplifiedBookDTO): SimplifiedBookDTO? {
         println("addBook 요청 들어옴")
         val existingBooks = getBooks()
         val isBook = existingBooks.filter { it.itemId == book.itemId }
@@ -270,9 +270,9 @@ class BookService(
             //데이터베이스에 책을 추가한 후, 반환된 ID(addBook)를 사용-> 자동생성기능도 업데이트
             // 새로운 SimplifiedBookDTO 객체를 생성
             saveBookToCache(book)
-            return getBooks()
+            return book
         }
-        return emptyList()
+        return null
     }
 
     fun getBookByItemId(itemId: Int): SimplifiedBookDTO? {
@@ -306,7 +306,7 @@ class BookService(
 
 
     // DB에서 책을 삭제
-    fun deleteBooks(itemIdList: List<Int>): List<SimplifiedBookDTO> {
+    fun deleteBooks(itemIdList: List<Int>): List<Int> {
         println("deleteBooks 요청 들어옴")
         println("삭제 요청 리스트 데이터: $itemIdList")
 
@@ -326,19 +326,19 @@ class BookService(
             println("hitRecordIdsToDelete 삭제된 행의 수: $hitRecordIdsToDelete")
 
             HitDetails.deleteWhere { HitDetails.hitRecord inList hitRecordIdsToDelete }
-            println("HitDetails 삭제된 행의 수: $HitDetails")
+            println("HitDetails 삭제된 행의 수: ${HitDetails.id}")
             // 이제 hits_record 테이블에서 참조하는 행들을 삭제
             HitsRecords.deleteWhere { HitsRecords.book inList bookIdsToDelete }
-            println("HitsRecords 삭제된 행의 수: $HitsRecords")
+            println("HitsRecords 삭제 id: ${HitsRecords.id}")
             // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
             // 마지막으로 SimplifiedBooks 테이블에서 행을 삭제
             val deletedRows = SimplifiedBooks.deleteWhere { SimplifiedBooks.itemId inList itemIdList }
-            println("SimplifiedBooks에서 삭제된 행의 수: $deletedRows")
+            println("SimplifiedBooks에서 삭제된 행: $deletedRows")
         }
         // 삭제된 캐시 업데이트
         // 캐시에서 삭제된 책 정보 삭제
         itemIdList.forEach { deleteBookFromCache(it) }
-        return getBooks()
+        return itemIdList
     }
 
     fun modifyBook(itemId: Int, updatedData: SimplifiedBookDTO): SimplifiedBookDTO {

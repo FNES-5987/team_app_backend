@@ -20,16 +20,16 @@ fun getCacheBooks(@RequestParam page:Int,@RequestParam size:Int ): List<Simplifi
 }
     // 추가
     @PostMapping("/add")
-    fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<List<SimplifiedBookDTO>> {
+    fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<SimplifiedBookDTO> {
         val books = bookService.addBook(book)
-        return if (books.isNotEmpty()) {
+        return if (books !==null ) {
             println("AddBooks: 도서 추가됨")
             println("itemId: ${book.itemId}")
             ResponseEntity.ok(books)
 
         } else {
             println("AddBooks: 기존의 도서로 추가 안됨.")
-            ResponseEntity.status(HttpStatus.CONFLICT).body(emptyList())
+            ResponseEntity.status(HttpStatus.CONFLICT).body(null)
         }
     }
     @DeleteMapping
@@ -39,7 +39,7 @@ fun getCacheBooks(@RequestParam page:Int,@RequestParam size:Int ): List<Simplifi
         return try {
             val deletedBookIds = bookService.deleteBooks(itemIds)
             val response = mapOf(
-                "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
+                "deletedBooks" to deletedBookIds,
                 "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
             )
             ResponseEntity.ok(response)

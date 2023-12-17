@@ -2,12 +2,13 @@ package com.example.app_backend.api
 
 import jakarta.annotation.PostConstruct
 import org.jetbrains.exposed.dao.id.IntIdTable
-import org.jetbrains.exposed.dao.id.LongIdTable
+//import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
+//import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.springframework.context.annotation.Configuration
+import org.jetbrains.exposed.sql.*
 //1
 object Best : IntIdTable("best") {
     //    val id = integer("id").autoIncrement()
@@ -78,7 +79,7 @@ object SimplifiedBooks : IntIdTable("simplified_book"){
     val description = varchar("description", 512)
     val isbn = varchar("isbn", 13)
     val isbn13 = varchar("isbn13", 13)
-    val itemId = integer("item_id")
+    val itemId = integer("item_id").index("idx_item_id")
     val priceSales = integer("price_sales")
     val priceStandard = integer("price_standard")
     val stockStatus = varchar("stock_status", 20)
@@ -137,17 +138,19 @@ class SimplifiedBooksTableSetup(private val database: Database) {
     fun migrateSchema() {
         transaction(database) {
             SchemaUtils.createMissingTablesAndColumns(SimplifiedBooks)
-        }
-    }
-}
+//        //my sql에서 item_id에 index 추가 해주는 걸로
 
-@Configuration
-class TodayBooksTableSetup(private val database: Database) {
-    @PostConstruct
-    fun migrateSchema() {
-        transaction(database) {
-            SchemaUtils.createMissingTablesAndColumns(TodayBooks)
         }
     }
 
+    @Configuration
+    class TodayBooksTableSetup(private val database: Database) {
+        @PostConstruct
+        fun migrateSchema() {
+            transaction(database) {
+                SchemaUtils.createMissingTablesAndColumns(TodayBooks)
+            }
+        }
+
+    }
 }
