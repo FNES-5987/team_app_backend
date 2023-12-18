@@ -15,7 +15,7 @@ class BookController(private val bookService: BookService) {
     @GetMapping("/cache")
 fun getCacheBooks(@RequestParam page:Int,@RequestParam size:Int ): List<SimplifiedBookDTO> {
     val cachedBooks = bookService.getPagedBooks(page, size )
-//        println("cacheBooks 응답 성공")
+        println("cacheBooks 응답 성공 page: ${page}")
     return cachedBooks
 }
     // 추가
