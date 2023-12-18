@@ -15,14 +15,14 @@ class BookController(private val bookService: BookService) {
     @GetMapping("/cache")
 fun getCacheBooks(@RequestParam page:Int,@RequestParam size:Int ): List<SimplifiedBookDTO> {
     val cachedBooks = bookService.getPagedBooks(page, size )
-        println("cacheBooks 응답 성공 page: ${page}")
+//        println("cacheBooks 응답 성공")
     return cachedBooks
 }
     // 추가
     @PostMapping("/add")
     fun addBook(@RequestBody book: SimplifiedBookDTO): ResponseEntity<SimplifiedBookDTO> {
         val books = bookService.addBook(book)
-        return if (books !==null ) {
+        return if (book !== null) {
             println("AddBooks: 도서 추가됨")
             println("itemId: ${book.itemId}")
             ResponseEntity.ok(books)
@@ -39,7 +39,7 @@ fun getCacheBooks(@RequestParam page:Int,@RequestParam size:Int ): List<Simplifi
         return try {
             val deletedBookIds = bookService.deleteBooks(itemIds)
             val response = mapOf(
-                "deletedBooks" to deletedBookIds,
+                "deletedBooks" to deletedBookIds,  // "deletedBookIds"를 "deletedBooks"로 변경
                 "message" to "총 ${deletedBookIds.size}개의 도서정보가 성공적으로 삭제 되었습니다."
             )
             ResponseEntity.ok(response)
