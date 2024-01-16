@@ -15,7 +15,7 @@ import java.time.format.DateTimeFormatter
 @Service
 class ApiService(private val aladinClient: AladinClient, private val bookService: BookService) {
 //    private val mapper = jacksonObjectMapper()
-    @Scheduled(fixedRate = 1000 * 60 * 60 * 12*7)
+//    @Scheduled(fixedRate = 1000 * 60 * 60 * 24*7)
     fun fetchGetBest() {
     try {
         transaction {
